@@ -1,0 +1,101 @@
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { Leaf, Clock, CheckCircle2, ArrowRight } from "lucide-react";
+import { packages, formatRupiah } from "@/lib/data";
+import Link from "next/link";
+
+export function PackagesSection() {
+  return (
+    <section id="paket" className="bg-background py-24">
+      <div className="mx-auto max-w-7xl px-6">
+        {/* Section header */}
+        <div className="mx-auto max-w-2xl text-center">
+          <p className="text-sm font-semibold uppercase tracking-widest text-primary">
+            Paket Wisata
+          </p>
+          <h2 className="mt-3 text-balance text-3xl font-bold tracking-tight text-foreground md:text-4xl">
+            Pilih Paket Eco-Tour Anda
+          </h2>
+          <p className="mt-4 text-pretty leading-relaxed text-muted-foreground">
+            Setiap paket dirancang dengan prinsip wisata berkelanjutan,
+            menyertakan donasi konservasi dan panduan lokal berpengalaman.
+          </p>
+        </div>
+
+        {/* Packages grid */}
+        <div className="mt-16 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {packages.map((pkg) => (
+            <Card
+              key={pkg.id}
+              className="group flex flex-col transition-all hover:shadow-xl hover:border-primary/40"
+            >
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Clock className="h-3.5 w-3.5" />
+                    {pkg.duration}
+                  </div>
+                  {pkg.eco && (
+                    <Badge
+                      variant="secondary"
+                      className="gap-1 bg-primary/10 text-primary border-primary/20"
+                    >
+                      <Leaf className="h-3 w-3" />
+                      Eco
+                    </Badge>
+                  )}
+                </div>
+                <CardTitle className="text-xl text-foreground group-hover:text-primary transition-colors">
+                  {pkg.title}
+                </CardTitle>
+                <CardDescription className="text-2xl font-bold text-foreground">
+                  {formatRupiah(pkg.price)}
+                  <span className="text-sm font-normal text-muted-foreground">
+                    {" "}
+                    / orang
+                  </span>
+                </CardDescription>
+              </CardHeader>
+
+              <CardContent className="flex-1">
+                <Separator className="mb-4" />
+                <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                  Termasuk
+                </p>
+                <ul className="flex flex-col gap-2">
+                  {pkg.includes.map((item) => (
+                    <li
+                      key={item}
+                      className="flex items-start gap-2 text-sm text-foreground"
+                    >
+                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+
+              <CardFooter>
+                <Button className="w-full" asChild>
+                  <Link href={`/paket/${pkg.id}`}>
+                    Lihat Detail
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
