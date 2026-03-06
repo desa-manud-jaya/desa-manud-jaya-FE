@@ -1,12 +1,23 @@
 import { Leaf, MapPin, Phone, Mail } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import logodesa from "../public/logomanudjaya.svg";
 import Link from "next/link";
+import Image from "next/image";
 
 const footerLinks = {
   destinasi: [
-    { label: "Bukit Panorama Lestari", href: "/destinasi/bukit-panorama-lestari" },
-    { label: "Air Terjun Tirta Manud", href: "/destinasi/air-terjun-tirta-manud" },
-    { label: "Kampung Sawah Organik", href: "/destinasi/kampung-sawah-organik" },
+    {
+      label: "Bukit Panorama Lestari",
+      href: "/destinasi/bukit-panorama-lestari",
+    },
+    {
+      label: "Air Terjun Tirta Manud",
+      href: "/destinasi/air-terjun-tirta-manud",
+    },
+    {
+      label: "Kampung Sawah Organik",
+      href: "/destinasi/kampung-sawah-organik",
+    },
     { label: "Desa Adat Manud", href: "/destinasi/desa-adat-manud" },
   ],
   paket: [
@@ -25,7 +36,15 @@ export function Footer() {
           {/* Brand */}
           <div className="lg:col-span-1">
             <div className="flex items-center gap-2">
-              <Leaf className="h-6 w-6 text-primary" />
+              {/* <Leaf className="h-6 w-6 text-primary" /> */}
+              <Image
+                src={logodesa}
+                alt="Logo Desa Manud Jaya"
+                width={150}
+                height={150}
+              />
+            </div>
+            <div className="flex items-center">
               <span className="text-lg font-bold">Desa Manud Jaya</span>
             </div>
             <p className="mt-4 text-sm leading-relaxed text-background/70">
@@ -92,8 +111,8 @@ export function Footer() {
               Universitas Indonesia
             </h3>
             <p className="mt-4 text-sm leading-relaxed text-background/70">
-              Proyek ini dikembangkan oleh mahasiswa Magister Teknologi Informasi,
-              Fakultas Ilmu Komputer, Universitas Indonesia.
+              Proyek ini dikembangkan oleh mahasiswa Magister Teknologi
+              Informasi, Fakultas Ilmu Komputer, Universitas Indonesia.
             </p>
             <p className="mt-3 text-xs text-background/50">Februari 2026</p>
           </div>
@@ -103,8 +122,8 @@ export function Footer() {
 
         <div className="flex flex-col items-center justify-between gap-4 text-center md:flex-row md:text-left">
           <p className="text-xs text-background/50">
-            &copy; 2026 Desa Manud Jaya. Platform Wisata Berkelanjutan. Hak Cipta
-            Dilindungi.
+            &copy; 2026 Desa Manud Jaya. Platform Wisata Berkelanjutan. Hak
+            Cipta Dilindungi.
           </p>
           <p className="text-xs text-background/50">
             Dikembangkan oleh Tim MTI Universitas Indonesia
