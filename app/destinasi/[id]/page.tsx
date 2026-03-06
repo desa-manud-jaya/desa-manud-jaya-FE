@@ -52,7 +52,7 @@ export default async function DestinationDetailPage({
       <Navbar />
       <main className="pt-20">
         {/* Hero */}
-        <div className="relative h-[50vh] min-h-[400px]">
+        <div className="relative h-[80vh] min-h-[400px]">
           <Image
             src={dest.image}
             alt={dest.name}

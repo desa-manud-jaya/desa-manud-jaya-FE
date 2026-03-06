@@ -1,16 +1,12 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Leaf,
   ArrowLeft,
@@ -57,44 +53,54 @@ export default async function PackageDetailPage({
       <Navbar />
       <main className="pt-20">
         {/* Header */}
-        <div className="bg-primary py-16">
-          <div className="mx-auto max-w-7xl px-6">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="mb-6 text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground"
-              asChild
-            >
-              <Link href="/#paket">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Kembali ke Paket Wisata
-              </Link>
-            </Button>
-            <div className="flex flex-wrap items-center gap-3 mb-3">
-              <Badge
-                variant="secondary"
-                className="bg-primary-foreground/20 text-primary-foreground border-0"
+        <div className="relative h-[80vh] min-h-[400px]">
+          <Image
+            src={pkg.image}
+            alt={pkg.title}
+            fill
+            className="object-cover"
+            priority
+          />
+          <div className="absolute inset-0 bg-foreground/50" />
+          <div className="absolute inset-0 flex items-end">
+            <div className="mx-auto w-full max-w-7xl px-6 pb-10">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="mb-6 text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground"
+                asChild
               >
-                <Clock className="mr-1 h-3 w-3" />
-                {pkg.duration}
-              </Badge>
-              {pkg.eco && (
-                <Badge className="gap-1 bg-primary-foreground text-primary">
-                  <Leaf className="h-3 w-3" />
-                  Eco-Friendly
+                <Link href="/#paket">
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Kembali ke Paket Wisata
+                </Link>
+              </Button>
+              <div className="flex flex-wrap items-center gap-3 mb-3">
+                <Badge
+                  variant="secondary"
+                  className="bg-primary-foreground/20 text-primary-foreground border-0"
+                >
+                  <Clock className="mr-1 h-3 w-3" />
+                  {pkg.duration}
                 </Badge>
-              )}
+                {pkg.eco && (
+                  <Badge className="gap-1 bg-primary-foreground text-primary">
+                    <Leaf className="h-3 w-3" />
+                    Eco-Friendly
+                  </Badge>
+                )}
+              </div>
+              <h1 className="text-balance text-3xl font-bold text-primary-foreground md:text-5xl">
+                {pkg.title}
+              </h1>
+              <p className="mt-3 text-3xl font-bold text-primary-foreground/90">
+                {formatRupiah(pkg.price)}
+                <span className="text-base font-normal text-primary-foreground/70">
+                  {" "}
+                  / orang
+                </span>
+              </p>
             </div>
-            <h1 className="text-balance text-3xl font-bold text-primary-foreground md:text-5xl">
-              {pkg.title}
-            </h1>
-            <p className="mt-3 text-3xl font-bold text-primary-foreground/90">
-              {formatRupiah(pkg.price)}
-              <span className="text-base font-normal text-primary-foreground/70">
-                {" "}
-                / orang
-              </span>
-            </p>
           </div>
         </div>
 
@@ -109,6 +115,11 @@ export default async function PackageDetailPage({
                 Itinerary
               </h2>
               <div className="mt-6 flex flex-col gap-4">
+                {pkg.itinerary2 && (
+                  <h3 className="text-lg font-semibold text-foreground">
+                    Hari 1
+                  </h3>
+                )}
                 {pkg.itinerary.map((item, i) => (
                   <div
                     key={i}
@@ -122,6 +133,48 @@ export default async function PackageDetailPage({
                     </p>
                   </div>
                 ))}
+                {pkg.itinerary2 && (
+                  <>
+                    <Separator className="my-6" />
+                    <h3 className="text-lg font-semibold text-foreground">
+                      Hari 2
+                    </h3>
+                    {pkg.itinerary2.map((item, i) => (
+                      <div
+                        key={i}
+                        className="flex items-start gap-4 rounded-xl border border-border bg-card p-5"
+                      >
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
+                          {i + 1}
+                        </div>
+                        <p className="text-sm leading-relaxed text-foreground">
+                          {item}
+                        </p>
+                      </div>
+                    ))}
+                  </>
+                )}
+                {pkg.itinerary3 && (
+                  <>
+                    <Separator className="my-6" />
+                    <h3 className="text-lg font-semibold text-foreground">
+                      Hari 3
+                    </h3>
+                    {pkg.itinerary3.map((item, i) => (
+                      <div
+                        key={i}
+                        className="flex items-start gap-4 rounded-xl border border-border bg-card p-5"
+                      >
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
+                          {i + 1}
+                        </div>
+                        <p className="text-sm leading-relaxed text-foreground">
+                          {item}
+                        </p>
+                      </div>
+                    ))}
+                  </>
+                )}
               </div>
 
               <Separator className="my-10" />
@@ -158,13 +211,17 @@ export default async function PackageDetailPage({
                   </CardHeader>
                   <CardContent className="flex flex-col gap-4">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">Harga</span>
+                      <span className="text-sm text-muted-foreground">
+                        Harga
+                      </span>
                       <span className="text-lg font-bold text-foreground">
                         {formatRupiah(pkg.price)}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">Durasi</span>
+                      <span className="text-sm text-muted-foreground">
+                        Durasi
+                      </span>
                       <span className="text-sm font-medium text-foreground">
                         {pkg.duration}
                       </span>

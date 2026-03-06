@@ -1,4 +1,5 @@
 import Image from "next/image";
+import GreenLeaf from "../public/greenleaf.svg";
 import { Button } from "@/components/ui/button";
 import { Leaf, MapPin, TreePine } from "lucide-react";
 
@@ -27,14 +28,14 @@ export function HeroSection() {
             Jelajahi Keindahan Desa Manud Jaya
           </h1>
           <p className="mt-6 max-w-lg text-pretty text-lg leading-relaxed text-primary-foreground/80">
-            Platform wisata berkelanjutan yang menghubungkan Anda dengan destinasi
-            alam, budaya, dan akomodasi ramah lingkungan di jantung desa yang
-            asri.
+            Platform wisata berkelanjutan yang menghubungkan Anda dengan
+            destinasi alam, budaya, dan akomodasi ramah lingkungan di jantung
+            desa yang asri.
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-4">
             <Button size="lg" asChild>
               <a href="#paket">
-                <TreePine className="mr-2 h-5 w-5" />
+                {/* <TreePine className="mr-2 h-5 w-5" /> */}
                 Lihat Paket Wisata
               </a>
             </Button>
@@ -45,10 +46,22 @@ export function HeroSection() {
               asChild
             >
               <a href="#destinasi">
-                <MapPin className="mr-2 h-5 w-5" />
-                Jelajahi Destinasi
+                {/* <MapPin className="mr-2 h-5 w-5" /> */}
+                Gabung Kemitraan Kami
               </a>
             </Button>
+          </div>
+          <div className="mt-6 inline-flex items-center gap-3">
+            <Image
+              src={GreenLeaf}
+              width={22}
+              height={22}
+              alt="green leaf"
+              className="shrink-0"
+            />
+            <p className="text-base font-medium leading-none text-primary-foreground/80 drop-shadow-sm">
+              Certified Eco-Friendly Experiences
+            </p>
           </div>
 
           {/* Stats */}
