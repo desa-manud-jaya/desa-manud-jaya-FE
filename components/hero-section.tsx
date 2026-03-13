@@ -1,13 +1,40 @@
+"use client";
+
 import Image from "next/image";
 import GreenLeaf from "../public/greenleaf.svg";
 import { Button } from "@/components/ui/button";
-import { Leaf, MapPin, TreePine } from "lucide-react";
+import { Leaf, X } from "lucide-react";
+import type { AuthMode } from "@/components/landing-page";
+import { RegisterChoiceForm } from "./auth/register-choice-form";
+import { LoginForm } from "./auth/login-form";
 
-export function HeroSection() {
+type HeroSectionProps = {
+  authMode: AuthMode;
+  onCloseAuth: () => void;
+  onSwitchMode: (mode: "login" | "register") => void;
+};
+
+export function HeroSection({
+  authMode,
+  onCloseAuth,
+  onSwitchMode,
+}: HeroSectionProps) {
+  const isAuthOpen = authMode !== null;
+
   return (
-    <section id="beranda" className="relative min-h-screen flex items-center">
-      {/* Background image */}
-      <div className="absolute inset-0 z-0">
+    <section
+      id="beranda"
+      className="relative min-h-screen overflow-hidden bg-background flex items-center"
+    >
+      {/* RIGHT / HERO IMAGE AREA */}
+      <div
+        className={[
+          "absolute inset-y-0 right-0 z-0 transition-all duration-700 ease-in-out",
+          isAuthOpen
+            ? "w-full md:w-1/2 md:rounded-bl-[48px] overflow-hidden"
+            : "w-full",
+        ].join(" ")}
+      >
         <Image
           src="/images/hero.jpg"
           alt="Pemandangan Desa Manud Jaya"
@@ -15,71 +42,130 @@ export function HeroSection() {
           className="object-cover"
           priority
         />
-        <div className="absolute inset-0 bg-foreground/60" />
+        <div
+          className={[
+            "absolute inset-0 transition-all duration-700",
+            isAuthOpen ? "bg-foreground/35" : "bg-foreground/60",
+          ].join(" ")}
+        />
+
+        {/* HERO CONTENT */}
+        <div className="relative z-10 mx-auto flex min-h-screen max-w-7xl items-center px-6 py-32 md:py-40">
+          <div
+            className={[
+              "max-w-2xl transition-all duration-500 ease-in-out",
+              isAuthOpen
+                ? "opacity-0 translate-y-4 pointer-events-none"
+                : "opacity-100 translate-y-0",
+            ].join(" ")}
+          >
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-primary/20 px-4 py-2 text-sm font-medium text-primary-foreground backdrop-blur-sm">
+              <Leaf className="h-4 w-4" />
+              <span>Wisata Berkelanjutan</span>
+            </div>
+
+            <h1 className="text-balance text-4xl font-bold leading-tight tracking-tight text-primary-foreground md:text-6xl lg:text-7xl">
+              Jelajahi Keindahan Desa Manud Jaya
+            </h1>
+
+            <p className="mt-6 max-w-lg text-pretty text-lg leading-relaxed text-primary-foreground/80">
+              Platform wisata berkelanjutan yang menghubungkan Anda dengan
+              destinasi alam, budaya, dan akomodasi ramah lingkungan di jantung
+              desa yang asri.
+            </p>
+
+            <div className="mt-8 flex flex-wrap items-center gap-4">
+              <Button size="lg" asChild>
+                <a href="#paket">Lihat Paket Wisata</a>
+              </Button>
+
+              <Button
+                size="lg"
+                variant="outline"
+                className="bg-primary-foreground/10 text-primary-foreground border-primary-foreground/30 hover:bg-primary-foreground/20 hover:text-primary-foreground"
+                asChild
+              >
+                <a href="#destinasi">Gabung Kemitraan Kami</a>
+              </Button>
+            </div>
+
+            <div className="mt-6 inline-flex items-center gap-3">
+              <Image
+                src={GreenLeaf}
+                width={22}
+                height={22}
+                alt="green leaf"
+                className="shrink-0"
+              />
+              <p className="text-base font-medium leading-none text-primary-foreground/80 drop-shadow-sm">
+                Certified Eco-Friendly Experiences
+              </p>
+            </div>
+
+            <div className="mt-12 flex flex-wrap gap-8">
+              {[
+                { value: "8+", label: "Destinasi Wisata" },
+                { value: "6", label: "Paket Eco-Tour" },
+                { value: "100%", label: "Ramah Lingkungan" },
+              ].map((stat) => (
+                <div key={stat.label} className="text-center">
+                  <p className="text-3xl font-bold text-primary-foreground">
+                    {stat.value}
+                  </p>
+                  <p className="text-sm text-primary-foreground/70">
+                    {stat.label}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div className="relative z-10 mx-auto max-w-7xl px-6 py-32 md:py-40">
-        <div className="max-w-2xl">
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-primary/20 px-4 py-2 text-sm font-medium text-primary-foreground backdrop-blur-sm">
-            <Leaf className="h-4 w-4" />
-            <span>Wisata Berkelanjutan</span>
-          </div>
-          <h1 className="text-balance text-4xl font-bold leading-tight tracking-tight text-primary-foreground md:text-6xl lg:text-7xl">
-            Jelajahi Keindahan Desa Manud Jaya
-          </h1>
-          <p className="mt-6 max-w-lg text-pretty text-lg leading-relaxed text-primary-foreground/80">
-            Platform wisata berkelanjutan yang menghubungkan Anda dengan
-            destinasi alam, budaya, dan akomodasi ramah lingkungan di jantung
-            desa yang asri.
-          </p>
-          <div className="mt-8 flex flex-wrap items-center gap-4">
-            <Button size="lg" asChild>
-              <a href="#paket">
-                {/* <TreePine className="mr-2 h-5 w-5" /> */}
-                Lihat Paket Wisata
-              </a>
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              className="bg-primary-foreground/10 text-primary-foreground border-primary-foreground/30 hover:bg-primary-foreground/20 hover:text-primary-foreground"
-              asChild
+      {/* LEFT / AUTH PANEL */}
+      <div
+        className={[
+            "absolute inset-y-0 left-0 z-20 bg-[#f5f5f0] overflow-hidden transition-all duration-700 ease-in-out",
+          isAuthOpen
+            ? "w-full translate-x-0 opacity-100 md:w-1/2"
+            : "w-full -translate-x-full opacity-0 pointer-events-none md:w-1/2",
+        ].join(" ")}
+      >
+        <div className="h-screen overflow-y-auto px-6 pt-28 pb-10 md:px-16">
+          <div className="mx-auto w-full max-w-xl">
+            <button
+              type="button"
+              onClick={onCloseAuth}
+              className="mb-8 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
             >
-              <a href="#destinasi">
-                {/* <MapPin className="mr-2 h-5 w-5" /> */}
-                Gabung Kemitraan Kami
-              </a>
-            </Button>
-          </div>
-          <div className="mt-6 inline-flex items-center gap-3">
-            <Image
-              src={GreenLeaf}
-              width={22}
-              height={22}
-              alt="green leaf"
-              className="shrink-0"
-            />
-            <p className="text-base font-medium leading-none text-primary-foreground/80 drop-shadow-sm">
-              Certified Eco-Friendly Experiences
-            </p>
-          </div>
+              <X className="h-4 w-4" />
+              Tutup
+            </button>
 
-          {/* Stats */}
-          <div className="mt-12 flex flex-wrap gap-8">
-            {[
-              { value: "8+", label: "Destinasi Wisata" },
-              { value: "6", label: "Paket Eco-Tour" },
-              { value: "100%", label: "Ramah Lingkungan" },
-            ].map((stat) => (
-              <div key={stat.label} className="text-center">
-                <p className="text-3xl font-bold text-primary-foreground">
-                  {stat.value}
-                </p>
-                <p className="text-sm text-primary-foreground/70">
-                  {stat.label}
-                </p>
-              </div>
-            ))}
+            {authMode === "register" ? (
+              <RegisterChoiceForm
+                onSwitchToLogin={() => onSwitchMode("login")}
+                onSelectTraveler={() => {
+                  console.log("pilih traveler");
+                }}
+                onSelectPartner={() => {
+                  console.log("pilih partner");
+                }}
+                onSubmitTraveler={(values) => {
+                  console.log("submit traveler:", values);
+                }}
+                onSubmitPartner={(values) => {
+                  console.log("submit partner:", values);
+                }}
+              />
+            ) : authMode === "login" ? (
+              <LoginForm
+                onSwitchToRegister={() => onSwitchMode("register")}
+                onSubmit={(values) => {
+                  console.log("login submit:", values);
+                }}
+              />
+            ) : null}
           </div>
         </div>
       </div>

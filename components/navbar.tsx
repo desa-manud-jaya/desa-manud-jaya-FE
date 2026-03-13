@@ -3,9 +3,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Leaf, Menu, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import logodesa from "../public/logomanudjaya.svg";
+import type { AuthMode } from "@/components/landing-page";
 
 const navLinks = [
   { href: "#beranda", label: "Beranda" },
@@ -15,11 +16,52 @@ const navLinks = [
   { href: "#kontak", label: "Kontak" },
 ];
 
-export function Navbar() {
+type NavbarProps = {
+  authMode?: AuthMode;
+  onOpenLogin?: () => void;
+  onOpenRegister?: () => void;
+  onCloseAuth?: () => void;
+};
+
+export function Navbar({
+  authMode = null,
+  onOpenLogin,
+  onOpenRegister,
+  onCloseAuth,
+}: NavbarProps) {
   const [open, setOpen] = useState(false);
 
+  const handleNavClick = () => {
+    setOpen(false);
+    onCloseAuth?.();
+  };
+
+  const handleLoginClick = () => {
+    setOpen(false);
+
+    if (!onOpenLogin) return;
+
+    if (authMode === "login") {
+      onCloseAuth?.();
+    } else {
+      onOpenLogin();
+    }
+  };
+
+  const handleRegisterClick = () => {
+    setOpen(false);
+
+    if (!onOpenRegister) return;
+
+    if (authMode === "register") {
+      onCloseAuth?.();
+    } else {
+      onOpenRegister();
+    }
+  };
+
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
+    <header className="fixed top-0 left-0 right-0 z-50 border-b border-border bg-background/80 backdrop-blur-md">
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-3 py-1">
         <Link href="/" className="flex items-center gap-2">
           <Image
@@ -33,47 +75,45 @@ export function Navbar() {
           </span>
         </Link>
 
-        {/* Desktop */}
         <ul className="hidden items-center gap-8 md:flex">
           {navLinks.map((link) => (
             <li key={link.href}>
-              <a
-                href={link.href}
-                className="text-sm text-primary font-medium transition-colors hover:text-primary/30"
+              <Link
+                href={`/${link.href}`}
+                onClick={handleNavClick}
+                className="text-sm font-medium text-primary transition-colors hover:text-primary/30"
               >
                 {link.label}
-              </a>
+              </Link>
             </li>
           ))}
         </ul>
 
-        <div className="hidden md:flex items-center gap-4">
-          <a
-            href="/login"
+        <div className="hidden items-center gap-4 md:flex">
+          <button
+            type="button"
+            onClick={handleLoginClick}
             className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
           >
             Masuk
-          </a>
+          </button>
+
           <span className="select-none text-muted-foreground/60">||</span>
 
           <Button
             size="lg"
             variant="outline"
-            className="bg-primary-foreground/10 border-primary hover:bg-primary-foreground/20"
-            asChild
+            className="border-primary bg-primary-foreground/10 hover:bg-primary-foreground/20"
+            onClick={handleRegisterClick}
           >
-            <a
-              href="/register"
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
-            >
+            <span className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
               Daftar
-            </a>
+            </span>
           </Button>
         </div>
 
-        {/* Mobile toggle */}
         <button
-          className="md:hidden text-foreground"
+          className="text-foreground md:hidden"
           onClick={() => setOpen(!open)}
           aria-label={open ? "Tutup menu" : "Buka menu"}
         >
@@ -81,36 +121,34 @@ export function Navbar() {
         </button>
       </nav>
 
-      {/* Mobile menu */}
       {open && (
         <div className="border-t border-border bg-background px-6 pb-6 md:hidden">
           <ul className="flex flex-col gap-4 pt-4">
             {navLinks.map((link) => (
               <li key={link.href}>
-                <a
-                  href={link.href}
-                  className="block text-sm text-primary font-medium transition-colors hover:text-primary/30"
-                  onClick={() => setOpen(false)}
+                <Link
+                  href={`/${link.href}`}
+                  className="block text-sm font-medium text-primary transition-colors hover:text-primary/30"
+                  onClick={handleNavClick}
                 >
                   {link.label}
-                </a>
+                </Link>
               </li>
             ))}
+
             <li>
-              <Button asChild className="w-full">
-                <a href="/login" onClick={() => setOpen(false)}>
-                  Masuk
-                </a>
+              <Button className="w-full" onClick={handleLoginClick}>
+                Masuk
               </Button>
+
               <div className="my-2 border-t border-border" />
+
               <Button
-                asChild
                 variant="outline"
-                className="w-full bg-primary-foreground/10 border-primary hover:bg-primary-foreground/20"
+                className="w-full border-primary bg-primary-foreground/10 hover:bg-primary-foreground/20"
+                onClick={handleRegisterClick}
               >
-                <a href="/register" onClick={() => setOpen(false)}>
-                  Daftar
-                </a>
+                Daftar
               </Button>
             </li>
           </ul>
