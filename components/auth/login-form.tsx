@@ -1,6 +1,8 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Eye, EyeOff } from "lucide-react";
+import { useState } from "react";
 
 type LoginRole = "traveler" | "partner" | "admin";
 
@@ -13,17 +15,35 @@ type LoginFormProps = {
   }) => void;
 };
 
+type LoginFormErrors = {
+  email?: string;
+  password?: string;
+};
+
 export function LoginForm({ onSwitchToRegister, onSubmit }: LoginFormProps) {
+  const [showPassword, setShowPassword] = useState(false);
+  const [errors, setErrors] = useState<LoginFormErrors>({});
+
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  event.preventDefault();
 
-    const formData = new FormData(event.currentTarget);
-    const email = String(formData.get("email") ?? "");
-    const password = String(formData.get("password") ?? "");
-    const role = String(formData.get("role") ?? "traveler") as LoginRole;
+  const formData = new FormData(event.currentTarget);
+  const email = String(formData.get("email") ?? "").trim();
+  const password = String(formData.get("password") ?? "").trim();
+  const role = String(formData.get("role") ?? "traveler") as LoginRole;
 
-    onSubmit?.({ email, password, role });
-  };
+  const newErrors: LoginFormErrors = {};
+
+  if (!email) newErrors.email = "Email wajib diisi.";
+  if (!password) newErrors.password = "Password wajib diisi.";
+
+  setErrors(newErrors);
+
+  if (Object.keys(newErrors).length > 0) return;
+
+  console.log("LOGIN FORM SUBMIT:", { email, password, role });
+  onSubmit?.({ email, password, role });
+};
 
   return (
     <>
@@ -36,19 +56,51 @@ export function LoginForm({ onSwitchToRegister, onSubmit }: LoginFormProps) {
       </p>
 
       <form onSubmit={handleSubmit} className="mt-10 space-y-4">
-        <input
-          name="email"
-          type="email"
-          placeholder="Email"
-          className="h-12 w-full rounded-xl border border-border bg-white px-4 outline-none focus:ring-2 focus:ring-primary/30"
-        />
+        <div>
+          <input
+            name="email"
+            type="email"
+            placeholder="Email"
+            className="h-12 w-full rounded-xl border border-border bg-white px-4 outline-none focus:ring-2 focus:ring-primary/30"
+            onChange={() =>
+              setErrors((prev) => ({ ...prev, email: undefined }))
+            }
+          />
+          {errors.email && (
+            <p className="mt-2 text-sm text-red-500">{errors.email}</p>
+          )}
+        </div>
 
-        <input
-          name="password"
-          type="password"
-          placeholder="Password"
-          className="h-12 w-full rounded-xl border border-border bg-white px-4 outline-none focus:ring-2 focus:ring-primary/30"
-        />
+        <div>
+          <div className="relative">
+            <input
+              name="password"
+              type={showPassword ? "text" : "password"}
+              placeholder="Password"
+              className="h-12 w-full rounded-xl border border-border bg-white px-4 pr-14 outline-none focus:ring-2 focus:ring-primary/30"
+              onChange={() =>
+                setErrors((prev) => ({ ...prev, password: undefined }))
+              }
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((prev) => !prev)}
+              className="absolute inset-y-0 right-0 flex w-14 items-center justify-center text-muted-foreground transition hover:text-foreground"
+              aria-label={
+                showPassword ? "Sembunyikan password" : "Tampilkan password"
+              }
+            >
+              {showPassword ? (
+                <EyeOff className="h-5 w-5" />
+              ) : (
+                <Eye className="h-5 w-5" />
+              )}
+            </button>
+          </div>
+          {errors.password && (
+            <p className="mt-2 text-sm text-red-500">{errors.password}</p>
+          )}
+        </div>
 
         <div className="space-y-2">
           <label className="text-sm font-medium text-foreground">

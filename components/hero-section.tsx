@@ -5,33 +5,40 @@ import GreenLeaf from "../public/greenleaf.svg";
 import { Button } from "@/components/ui/button";
 import { Leaf, X } from "lucide-react";
 import type { AuthMode } from "@/components/landing-page";
-import { RegisterChoiceForm } from "./auth/register-choice-form";
-import { LoginForm } from "./auth/login-form";
+import { LoginForm } from "@/components/auth/login-form";
+import { RegisterChoiceForm } from "@/components/auth/register-choice-form";
 
 type HeroSectionProps = {
   authMode: AuthMode;
   onCloseAuth: () => void;
-  onSwitchMode: (mode: "login" | "register") => void;
+  onOpenLogin: () => void;
+  onOpenRegister: () => void;
+  onLoginSubmit: (formData: {
+    email: string;
+    password: string;
+    role: "traveler" | "partner" | "admin";
+  }) => void;
 };
 
 export function HeroSection({
   authMode,
   onCloseAuth,
-  onSwitchMode,
+  onOpenLogin,
+  onOpenRegister,
+  onLoginSubmit,
 }: HeroSectionProps) {
   const isAuthOpen = authMode !== null;
 
   return (
     <section
       id="beranda"
-      className="relative min-h-screen overflow-hidden bg-background flex items-center"
+      className="relative flex min-h-screen items-center overflow-hidden bg-background"
     >
-      {/* RIGHT / HERO IMAGE AREA */}
       <div
         className={[
           "absolute inset-y-0 right-0 z-0 transition-all duration-700 ease-in-out",
           isAuthOpen
-            ? "w-full md:w-1/2 md:rounded-bl-[48px] overflow-hidden"
+            ? "w-full overflow-hidden md:w-1/2 md:rounded-bl-[48px]"
             : "w-full",
         ].join(" ")}
       >
@@ -49,14 +56,13 @@ export function HeroSection({
           ].join(" ")}
         />
 
-        {/* HERO CONTENT */}
         <div className="relative z-10 mx-auto flex min-h-screen max-w-7xl items-center px-6 py-32 md:py-40">
           <div
             className={[
               "max-w-2xl transition-all duration-500 ease-in-out",
               isAuthOpen
-                ? "opacity-0 translate-y-4 pointer-events-none"
-                : "opacity-100 translate-y-0",
+                ? "pointer-events-none translate-y-4 opacity-0"
+                : "translate-y-0 opacity-100",
             ].join(" ")}
           >
             <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-primary/20 px-4 py-2 text-sm font-medium text-primary-foreground backdrop-blur-sm">
@@ -82,10 +88,10 @@ export function HeroSection({
               <Button
                 size="lg"
                 variant="outline"
-                className="bg-primary-foreground/10 text-primary-foreground border-primary-foreground/30 hover:bg-primary-foreground/20 hover:text-primary-foreground"
-                asChild
+                className="border-primary-foreground/30 bg-primary-foreground/10 text-primary-foreground hover:bg-primary-foreground/20 hover:text-primary-foreground"
+                onClick={onOpenRegister}
               >
-                <a href="#destinasi">Gabung Kemitraan Kami</a>
+                Gabung Kemitraan Kami
               </Button>
             </div>
 
@@ -122,16 +128,15 @@ export function HeroSection({
         </div>
       </div>
 
-      {/* LEFT / AUTH PANEL */}
       <div
         className={[
-            "absolute inset-y-0 left-0 z-20 bg-[#f5f5f0] overflow-hidden transition-all duration-700 ease-in-out",
+          "absolute inset-y-0 left-0 z-20 overflow-hidden bg-[#f5f5f0] transition-all duration-700 ease-in-out",
           isAuthOpen
             ? "w-full translate-x-0 opacity-100 md:w-1/2"
-            : "w-full -translate-x-full opacity-0 pointer-events-none md:w-1/2",
+            : "pointer-events-none -translate-x-full opacity-0 md:w-1/2",
         ].join(" ")}
       >
-        <div className="h-screen overflow-y-auto px-6 pt-28 pb-10 md:px-16">
+        <div className="hide-scrollbar h-screen overflow-y-auto px-6 pb-10 pt-28 md:px-16">
           <div className="mx-auto w-full max-w-xl">
             <button
               type="button"
@@ -144,7 +149,7 @@ export function HeroSection({
 
             {authMode === "register" ? (
               <RegisterChoiceForm
-                onSwitchToLogin={() => onSwitchMode("login")}
+                onSwitchToLogin={onOpenLogin}
                 onSelectTraveler={() => {
                   console.log("pilih traveler");
                 }}
@@ -160,10 +165,8 @@ export function HeroSection({
               />
             ) : authMode === "login" ? (
               <LoginForm
-                onSwitchToRegister={() => onSwitchMode("register")}
-                onSubmit={(values) => {
-                  console.log("login submit:", values);
-                }}
+                onSwitchToRegister={onOpenRegister}
+                onSubmit={onLoginSubmit}
               />
             ) : null}
           </div>
