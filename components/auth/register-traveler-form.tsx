@@ -11,10 +11,20 @@ import {
 type RegisterTravelerFormProps = {
   onBack: () => void;
   onSwitchToLogin: () => void;
-  onSubmit?: (formData: TravelerFormValues) => void;
+  onSubmit?: (formData: RegisterTravelerFormValues) => void;
 };
 
-type TravelerFormErrors = Partial<Record<keyof TravelerFormValues, string>>;
+type RegisterTravelerFormValues = {
+  username: string;
+  fullName: string;
+  email: string;
+  phone: string;
+  password: string;
+  confirmPassword: string;
+};
+type TravelerFormErrors = Partial<
+  Record<keyof RegisterTravelerFormValues, string>
+>;
 
 const inputClassName =
   "h-14 w-full rounded-2xl border bg-white px-5 pr-14 text-base text-foreground placeholder:text-muted-foreground/80 outline-none transition focus:ring-2 focus:ring-primary/20";
@@ -28,14 +38,14 @@ export function RegisterTravelerForm({
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const getInputClassName = (field: keyof TravelerFormValues) =>
+  const getInputClassName = (field: keyof RegisterTravelerFormValues) =>
     `${inputClassName} ${
       errors[field]
         ? "border-red-500 focus:border-red-500 focus:ring-red-200"
         : "border-stone-300 focus:border-primary"
     }`;
 
-  const clearFieldError = (field: keyof TravelerFormValues) => {
+  const clearFieldError = (field: keyof RegisterTravelerFormValues) => {
     if (!errors[field]) return;
     setErrors((prev) => ({ ...prev, [field]: undefined }));
   };
@@ -44,7 +54,8 @@ export function RegisterTravelerForm({
     event.preventDefault();
 
     const formData = new FormData(event.currentTarget);
-    const values: TravelerFormValues = {
+    const values: RegisterTravelerFormValues = {
+      username: String(formData.get("username") ?? ""),
       fullName: String(formData.get("fullName") ?? ""),
       email: String(formData.get("email") ?? ""),
       phone: String(formData.get("phone") ?? ""),
@@ -89,6 +100,18 @@ export function RegisterTravelerForm({
       </p>
 
       <form onSubmit={handleSubmit} noValidate className="mt-10 space-y-5">
+        <div>
+          <input
+            name="username"
+            type="text"
+            placeholder="Username"
+            className={getInputClassName("username")}
+            onChange={() => clearFieldError("username")}
+          />
+          {errors.username && (
+            <p className="mt-2 text-sm text-red-500">{errors.username}</p>
+          )}
+        </div>
         <div>
           <input
             name="fullName"
@@ -141,7 +164,9 @@ export function RegisterTravelerForm({
               type="button"
               onClick={() => setShowPassword((prev) => !prev)}
               className="absolute inset-y-0 right-0 flex w-14 items-center justify-center text-muted-foreground transition hover:text-foreground"
-              aria-label={showPassword ? "Sembunyikan password" : "Tampilkan password"}
+              aria-label={
+                showPassword ? "Sembunyikan password" : "Tampilkan password"
+              }
             >
               {showPassword ? (
                 <EyeOff className="h-5 w-5" />
