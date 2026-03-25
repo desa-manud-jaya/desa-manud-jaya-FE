@@ -6,6 +6,13 @@ export type RegisterTravelerPayload = {
   password: string;
 };
 
+export type LoginApiResponse = {
+  id: string;
+  token: string;
+  username: string;
+  role: string;
+};
+
 export type JenisUsahaApi =
   | "AKOMODASI"
   | "TOURIST_ATTRACTION"
@@ -48,10 +55,10 @@ export async function registerPartner(payload: RegisterPartnerPayload) {
 }
 
 export async function login(payload: {
-  email: string;
+  username: string;
   password: string;
 }) {
-  return apiFetch<AuthApiResponse>("/auth/login", {
+  return apiFetch<LoginApiResponse>("/auth/login", {
     method: "POST",
     body: JSON.stringify(payload),
   });

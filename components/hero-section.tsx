@@ -8,7 +8,11 @@ import { Leaf, X } from "lucide-react";
 import type { AuthMode } from "@/components/landing-page";
 import { LoginForm } from "@/components/auth/login-form";
 import { RegisterChoiceForm } from "@/components/auth/register-choice-form";
-import { registerTraveler, registerPartner } from "@/lib/services/auth-service";
+import {
+  registerTraveler,
+  registerPartner,
+  login,
+} from "@/lib/services/auth-service";
 import { mapBusinessTypeToApi } from "@/lib/mappers/business-type";
 
 type HeroSectionProps = {
@@ -16,10 +20,15 @@ type HeroSectionProps = {
   onCloseAuth: () => void;
   onOpenLogin: () => void;
   onOpenRegister: () => void;
-  onLoginSubmit: (formData: {
+  onLoginSubmit: (user: {
+    id: string;
+    token: string;
+    username: string;
+    backendRole: string;
+    name: string;
     email: string;
-    password: string;
     role: "traveler" | "partner" | "admin";
+    roleLabel: string;
   }) => void;
 };
 
@@ -61,6 +70,7 @@ export function HeroSection({
   const [isSubmittingTraveler, setIsSubmittingTraveler] = useState(false);
   const [isSubmittingPartner, setIsSubmittingPartner] = useState(false);
   const [feedback, setFeedback] = useState<FeedbackState>(null);
+  const [isSubmittingLogin, setIsSubmittingLogin] = useState(false);
 
   const handleRegisterTraveler = async (values: TravelerRegisterValues) => {
     setFeedback(null);
@@ -161,6 +171,87 @@ export function HeroSection({
       });
     } finally {
       setIsSubmittingPartner(false);
+    }
+  };
+
+  function mapBackendRoleToFrontendRole(
+    backendRole: string,
+  ): "traveler" | "partner" | "admin" {
+    switch (backendRole) {
+      case "ADMIN":
+        return "admin";
+      case "VENDOR":
+        return "partner";
+      case "USER":
+      default:
+        return "traveler";
+    }
+  }
+
+  function getRoleLabel(role: "traveler" | "partner" | "admin") {
+    switch (role) {
+      case "admin":
+        return "Admin";
+      case "partner":
+        return "Partner";
+      case "traveler":
+      default:
+        return "Traveler";
+    }
+  }
+
+  const handleLoginSubmit = async (values: {
+    username: string;
+    password: string;
+    role: "traveler" | "partner" | "admin";
+  }) => {
+    setFeedback(null);
+
+    try {
+      setIsSubmittingLogin(true);
+
+      const payload = {
+        username: values.username.trim(),
+        password: values.password,
+      };
+
+      console.log("LOGIN PAYLOAD:", payload);
+
+      const response = await login(payload);
+
+      console.log("LOGIN RESPONSE:", response);
+
+      const frontendRole = mapBackendRoleToFrontendRole(response.role);
+
+      const loggedInUser = {
+        id: response.id,
+        token: response.token,
+        username: response.username,
+        backendRole: response.role,
+        name: response.username,
+        email: "",
+        role: frontendRole,
+        roleLabel: getRoleLabel(frontendRole),
+      };
+
+      setFeedback({
+        type: "success",
+        message: "Login berhasil.",
+      });
+
+      onLoginSubmit(loggedInUser);
+    } catch (error) {
+      console.error("LOGIN ERROR:", error);
+
+      setFeedback({
+        type: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Terjadi kesalahan saat login.",
+      });
+    } finally {
+      setIsSubmittingLogin(false);
     }
   };
 
@@ -323,7 +414,7 @@ export function HeroSection({
                   setFeedback(null);
                   onOpenRegister();
                 }}
-                onSubmit={onLoginSubmit}
+                onSubmit={handleLoginSubmit}
               />
             ) : null}
           </div>

@@ -50,7 +50,7 @@ export default async function PackageDetailPage({
 
   return (
     <>
-      
+      <Navbar hideAuthSection={true}/>
       <main className="pt-20">
         {/* Header */}
         <div className="relative h-[80vh] min-h-[400px]">
