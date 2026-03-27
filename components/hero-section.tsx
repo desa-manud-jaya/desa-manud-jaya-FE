@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import GreenLeaf from "../public/greenleaf.svg";
 import { Button } from "@/components/ui/button";
@@ -7,18 +8,55 @@ import { Leaf, X } from "lucide-react";
 import type { AuthMode } from "@/components/landing-page";
 import { LoginForm } from "@/components/auth/login-form";
 import { RegisterChoiceForm } from "@/components/auth/register-choice-form";
+import {
+  registerTraveler,
+  registerPartner,
+  login,
+} from "@/lib/services/auth-service";
+import { mapBusinessTypeToApi } from "@/lib/mappers/business-type";
 
 type HeroSectionProps = {
   authMode: AuthMode;
   onCloseAuth: () => void;
   onOpenLogin: () => void;
   onOpenRegister: () => void;
-  onLoginSubmit: (formData: {
+  onLoginSubmit: (user: {
+    id: string;
+    token: string;
+    username: string;
+    backendRole: string;
+    name: string;
     email: string;
-    password: string;
     role: "traveler" | "partner" | "admin";
+    roleLabel: string;
   }) => void;
 };
+
+type TravelerRegisterValues = {
+  username: string;
+  fullName: string;
+  email: string;
+  phone: string;
+  password: string;
+  confirmPassword: string;
+};
+
+type PartnerRegisterValues = {
+  username: string;
+  businessName: string;
+  ownerName: string;
+  businessType: string;
+  address: string;
+  email: string;
+  phone: string;
+  password: string;
+  confirmPassword: string;
+};
+
+type FeedbackState = {
+  type: "success" | "error";
+  message: string;
+} | null;
 
 export function HeroSection({
   authMode,
@@ -28,6 +66,194 @@ export function HeroSection({
   onLoginSubmit,
 }: HeroSectionProps) {
   const isAuthOpen = authMode !== null;
+
+  const [isSubmittingTraveler, setIsSubmittingTraveler] = useState(false);
+  const [isSubmittingPartner, setIsSubmittingPartner] = useState(false);
+  const [feedback, setFeedback] = useState<FeedbackState>(null);
+  const [isSubmittingLogin, setIsSubmittingLogin] = useState(false);
+
+  const handleRegisterTraveler = async (values: TravelerRegisterValues) => {
+    setFeedback(null);
+
+    if (values.password !== values.confirmPassword) {
+      setFeedback({
+        type: "error",
+        message: "Password dan konfirmasi password tidak sama.",
+      });
+      return;
+    }
+
+    try {
+      setIsSubmittingTraveler(true);
+
+      const payload = {
+        username: values.username.trim(),
+        email: values.email.trim(),
+        password: values.password,
+      };
+      console.log("REGISTER TRAVELER PAYLOAD:", payload);
+
+      const response = await registerTraveler(payload);
+
+      console.log("REGISTER TRAVELER RESPONSE:", response);
+
+      setFeedback({
+        type: "success",
+        message:
+          "Registrasi wisatawan berhasil. Silakan login menggunakan akun Anda.",
+      });
+
+      onOpenLogin();
+    } catch (error) {
+      console.error("REGISTER TRAVELER ERROR:", error);
+
+      setFeedback({
+        type: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Terjadi kesalahan saat registrasi wisatawan.",
+      });
+    } finally {
+      setIsSubmittingTraveler(false);
+    }
+  };
+
+  const handleRegisterPartner = async (values: PartnerRegisterValues) => {
+    setFeedback(null);
+
+    if (values.password !== values.confirmPassword) {
+      setFeedback({
+        type: "error",
+        message: "Password dan konfirmasi password tidak sama.",
+      });
+      return;
+    }
+
+    try {
+      setIsSubmittingPartner(true);
+
+      const payload = {
+        username: values.username.trim(),
+        email: values.email.trim(),
+        password: values.password,
+        jenisUsaha: mapBusinessTypeToApi(values.businessType),
+        namaUsaha: values.businessName.trim(),
+        namaOwner: values.ownerName.trim(),
+        description: "",
+        ktpNumber: "",
+        phone: values.phone.trim(),
+        address: values.address.trim(),
+      };
+
+      console.log("REGISTER PARTNER PAYLOAD:", payload);
+
+      const response = await registerPartner(payload);
+
+      console.log("REGISTER PARTNER RESPONSE:", response);
+
+      setFeedback({
+        type: "success",
+        message:
+          "Registrasi mitra berhasil dikirim. Silakan tunggu proses verifikasi dari admin.",
+      });
+
+      onOpenLogin();
+    } catch (error) {
+      console.error("REGISTER PARTNER ERROR:", error);
+
+      setFeedback({
+        type: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Terjadi kesalahan saat registrasi mitra.",
+      });
+    } finally {
+      setIsSubmittingPartner(false);
+    }
+  };
+
+  function mapBackendRoleToFrontendRole(
+    backendRole: string,
+  ): "traveler" | "partner" | "admin" {
+    switch (backendRole) {
+      case "ADMIN":
+        return "admin";
+      case "VENDOR":
+        return "partner";
+      case "USER":
+      default:
+        return "traveler";
+    }
+  }
+
+  function getRoleLabel(role: "traveler" | "partner" | "admin") {
+    switch (role) {
+      case "admin":
+        return "Admin";
+      case "partner":
+        return "Partner";
+      case "traveler":
+      default:
+        return "Traveler";
+    }
+  }
+
+  const handleLoginSubmit = async (values: {
+    username: string;
+    password: string;
+    role: "traveler" | "partner" | "admin";
+  }) => {
+    setFeedback(null);
+
+    try {
+      setIsSubmittingLogin(true);
+
+      const payload = {
+        username: values.username.trim(),
+        password: values.password,
+      };
+
+      console.log("LOGIN PAYLOAD:", payload);
+
+      const response = await login(payload);
+
+      console.log("LOGIN RESPONSE:", response);
+
+      const frontendRole = mapBackendRoleToFrontendRole(response.role);
+
+      const loggedInUser = {
+        id: response.id,
+        token: response.token,
+        username: response.username,
+        backendRole: response.role,
+        name: response.username,
+        email: "",
+        role: frontendRole,
+        roleLabel: getRoleLabel(frontendRole),
+      };
+
+      setFeedback({
+        type: "success",
+        message: "Login berhasil.",
+      });
+
+      onLoginSubmit(loggedInUser);
+    } catch (error) {
+      console.error("LOGIN ERROR:", error);
+
+      setFeedback({
+        type: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Terjadi kesalahan saat login.",
+      });
+    } finally {
+      setIsSubmittingLogin(false);
+    }
+  };
 
   return (
     <section
@@ -140,33 +366,55 @@ export function HeroSection({
           <div className="mx-auto w-full max-w-xl">
             <button
               type="button"
-              onClick={onCloseAuth}
+              onClick={() => {
+                setFeedback(null);
+                onCloseAuth();
+              }}
               className="mb-8 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
             >
               <X className="h-4 w-4" />
               Tutup
             </button>
 
+            {feedback && (
+              <div
+                className={[
+                  "mb-6 rounded-xl border px-4 py-3 text-sm",
+                  feedback.type === "success"
+                    ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                    : "border-red-200 bg-red-50 text-red-700",
+                ].join(" ")}
+              >
+                {feedback.message}
+              </div>
+            )}
+
             {authMode === "register" ? (
               <RegisterChoiceForm
-                onSwitchToLogin={onOpenLogin}
+                onSwitchToLogin={() => {
+                  setFeedback(null);
+                  onOpenLogin();
+                }}
                 onSelectTraveler={() => {
+                  setFeedback(null);
                   console.log("pilih traveler");
                 }}
                 onSelectPartner={() => {
+                  setFeedback(null);
                   console.log("pilih partner");
                 }}
-                onSubmitTraveler={(values) => {
-                  console.log("submit traveler:", values);
-                }}
-                onSubmitPartner={(values) => {
-                  console.log("submit partner:", values);
-                }}
+                onSubmitTraveler={handleRegisterTraveler}
+                onSubmitPartner={handleRegisterPartner}
+                isSubmittingTraveler={isSubmittingTraveler}
+                isSubmittingPartner={isSubmittingPartner}
               />
             ) : authMode === "login" ? (
               <LoginForm
-                onSwitchToRegister={onOpenRegister}
-                onSubmit={onLoginSubmit}
+                onSwitchToRegister={() => {
+                  setFeedback(null);
+                  onOpenRegister();
+                }}
+                onSubmit={handleLoginSubmit}
               />
             ) : null}
           </div>

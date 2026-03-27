@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 export default function DestinationsPage() {
   return (
     <>
-      <Navbar />
+      <Navbar hideAuthSection={true} />
       <main className="pt-20">
         <div className="bg-primary py-20">
           <div className="mx-auto max-w-7xl px-6 text-center">

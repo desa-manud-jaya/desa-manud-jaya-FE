@@ -49,7 +49,7 @@ export default async function DestinationDetailPage({
 
   return (
     <>
-      <Navbar />
+      <Navbar hideAuthSection={true}/>
       <main className="pt-20">
         {/* Hero */}
         <div className="relative h-[80vh] min-h-[400px]">

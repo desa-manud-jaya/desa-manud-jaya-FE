@@ -6,7 +6,8 @@ import { RegisterPartnerForm } from "@/components/auth/register-partner-form";
 
 type RegisterStep = "choice" | "traveler" | "partner";
 
-type RegisterTravelerFormValues = {
+export type RegisterTravelerFormValues = {
+  username: string;
   fullName: string;
   email: string;
   phone: string;
@@ -14,11 +15,12 @@ type RegisterTravelerFormValues = {
   confirmPassword: string;
 };
 
-type RegisterPartnerFormValues = {
+export type RegisterPartnerFormValues = {
+  username: string;
   businessName: string;
   ownerName: string;
   businessType: string;
-  businessAddress: string;
+  address: string;
   email: string;
   phone: string;
   password: string;
@@ -31,6 +33,8 @@ type RegisterChoiceFormProps = {
   onSelectPartner?: () => void;
   onSubmitTraveler?: (formData: RegisterTravelerFormValues) => void;
   onSubmitPartner?: (formData: RegisterPartnerFormValues) => void;
+  isSubmittingTraveler?: boolean;
+  isSubmittingPartner?: boolean;
 };
 
 export function RegisterChoiceForm({

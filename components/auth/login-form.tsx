@@ -9,14 +9,14 @@ type LoginRole = "traveler" | "partner" | "admin";
 type LoginFormProps = {
   onSwitchToRegister: () => void;
   onSubmit?: (formData: {
-    email: string;
+    username: string;
     password: string;
     role: LoginRole;
   }) => void;
 };
 
 type LoginFormErrors = {
-  email?: string;
+  username?: string;
   password?: string;
 };
 
@@ -25,25 +25,25 @@ export function LoginForm({ onSwitchToRegister, onSubmit }: LoginFormProps) {
   const [errors, setErrors] = useState<LoginFormErrors>({});
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-  event.preventDefault();
+    event.preventDefault();
 
-  const formData = new FormData(event.currentTarget);
-  const email = String(formData.get("email") ?? "").trim();
-  const password = String(formData.get("password") ?? "").trim();
-  const role = String(formData.get("role") ?? "traveler") as LoginRole;
+    const formData = new FormData(event.currentTarget);
+    const username = String(formData.get("username") ?? "").trim();
+    const password = String(formData.get("password") ?? "").trim();
+    const role = String(formData.get("role") ?? "traveler") as LoginRole;
 
-  const newErrors: LoginFormErrors = {};
+    const newErrors: LoginFormErrors = {};
 
-  if (!email) newErrors.email = "Email wajib diisi.";
-  if (!password) newErrors.password = "Password wajib diisi.";
+    if (!username) newErrors.username = "Username wajib diisi.";
+    if (!password) newErrors.password = "Password wajib diisi.";
 
-  setErrors(newErrors);
+    setErrors(newErrors);
 
-  if (Object.keys(newErrors).length > 0) return;
+    if (Object.keys(newErrors).length > 0) return;
 
-  console.log("LOGIN FORM SUBMIT:", { email, password, role });
-  onSubmit?.({ email, password, role });
-};
+    console.log("LOGIN FORM SUBMIT:", { username, password, role });
+    onSubmit?.({ username, password, role });
+  };
 
   return (
     <>
@@ -58,16 +58,16 @@ export function LoginForm({ onSwitchToRegister, onSubmit }: LoginFormProps) {
       <form onSubmit={handleSubmit} className="mt-10 space-y-4">
         <div>
           <input
-            name="email"
-            type="email"
-            placeholder="Email"
+            name="username"
+            type="text"
+            placeholder="Username"
             className="h-12 w-full rounded-xl border border-border bg-white px-4 outline-none focus:ring-2 focus:ring-primary/30"
             onChange={() =>
-              setErrors((prev) => ({ ...prev, email: undefined }))
+              setErrors((prev) => ({ ...prev, username: undefined }))
             }
           />
-          {errors.email && (
-            <p className="mt-2 text-sm text-red-500">{errors.email}</p>
+          {errors.username && (
+            <p className="mt-2 text-sm text-red-500">{errors.username}</p>
           )}
         </div>
 

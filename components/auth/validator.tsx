@@ -1,6 +1,7 @@
 type FormErrors<T> = Partial<Record<keyof T, string>>;
 
 export type TravelerFormValues = {
+  username: string;
   fullName: string;
   email: string;
   phone: string;
@@ -9,10 +10,11 @@ export type TravelerFormValues = {
 };
 
 export type PartnerFormValues = {
+  username: string;
   businessName: string;
   ownerName: string;
   businessType: string;
-  businessAddress: string;
+  address: string;
   email: string;
   phone: string;
   password: string;
@@ -38,6 +40,10 @@ export function validateTravelerForm(
   values: TravelerFormValues
 ): FormErrors<TravelerFormValues> {
   const errors: FormErrors<TravelerFormValues> = {};
+
+  if (!values.username.trim()) {
+    errors.username = "Username wajib diisi.";
+  }
 
   if (!values.fullName.trim()) {
     errors.fullName = "Nama lengkap wajib diisi.";
@@ -75,6 +81,10 @@ export function validatePartnerForm(
 ): FormErrors<PartnerFormValues> {
   const errors: FormErrors<PartnerFormValues> = {};
 
+  if (!values.username.trim()) {
+    errors.username = "Username wajib diisi.";
+  }
+
   if (!values.businessName.trim()) {
     errors.businessName = "Nama usaha wajib diisi.";
   }
@@ -87,8 +97,8 @@ export function validatePartnerForm(
     errors.businessType = "Jenis usaha wajib diisi.";
   }
 
-  if (!values.businessAddress.trim()) {
-    errors.businessAddress = "Alamat usaha wajib diisi.";
+  if (!values.address.trim()) {
+    errors.address = "Alamat usaha wajib diisi.";
   }
 
   if (!values.email.trim()) {
