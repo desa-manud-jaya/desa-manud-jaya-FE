@@ -1,23 +1,33 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import type { Metadata } from "next";
+
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
 import {
   Leaf,
   ArrowLeft,
   Clock,
   CheckCircle2,
-  MapPin,
   CalendarDays,
   Users,
 } from "lucide-react";
-import { packages, formatRupiah } from "@/lib/data";
-import type { Metadata } from "next";
+
+import { formatRupiah, packages } from "@/lib/data";
+import {
+  getApprovedPackageById,
+  getMergedPackageList,
+  getMockPackageById,
+  getPackageDetailById,
+  mapApiPackageToDetailItem,
+  mapMockPackageToDetailItem,
+} from "@/lib/services/package-service";
 
 export async function generateStaticParams() {
   return packages.map((p) => ({ id: p.id }));
@@ -29,11 +39,29 @@ export async function generateMetadata({
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
   const { id } = await params;
-  const pkg = packages.find((p) => p.id === id);
-  if (!pkg) return { title: "Paket Tidak Ditemukan" };
+
+  const mockPkg = getMockPackageById(id);
+  if (mockPkg) {
+    const mapped = mapMockPackageToDetailItem(mockPkg);
+
+    return {
+      title: `${mapped.title} - Desa Manud Jaya`,
+      description: `Paket wisata ${mapped.title} - ${mapped.duration} dengan harga ${formatRupiah(mapped.price)} per orang.`,
+    };
+  }
+
+  const apiPkg = await getApprovedPackageById(id);
+  if (apiPkg) {
+    const mapped = mapApiPackageToDetailItem(apiPkg);
+
+    return {
+      title: `${mapped.title} - Desa Manud Jaya`,
+      description: `Paket wisata ${mapped.title} - ${mapped.duration} dengan harga ${formatRupiah(mapped.price)} per orang.`,
+    };
+  }
+
   return {
-    title: `${pkg.title} - Desa Manud Jaya`,
-    description: `Paket wisata ${pkg.title} - ${pkg.duration} dengan harga ${formatRupiah(pkg.price)} per orang.`,
+    title: "Paket Tidak Ditemukan",
   };
 }
 
@@ -43,16 +71,20 @@ export default async function PackageDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const pkg = packages.find((p) => p.id === id);
-  if (!pkg) notFound();
 
-  const otherPackages = packages.filter((p) => p.id !== id).slice(0, 3);
+  const pkg = await getPackageDetailById(id);
+
+  if (!pkg) {
+    notFound();
+  }
+
+  const mergedPackages = await getMergedPackageList();
+  const otherPackages = mergedPackages.filter((p) => p.id !== id).slice(0, 3);
 
   return (
     <>
-      <Navbar hideAuthSection={true}/>
+      <Navbar hideAuthSection={true} />
       <main className="pt-20">
-        {/* Header */}
         <div className="relative h-[80vh] min-h-[400px]">
           <Image
             src={pkg.image}
@@ -75,14 +107,16 @@ export default async function PackageDetailPage({
                   Kembali ke Paket Wisata
                 </Link>
               </Button>
-              <div className="flex flex-wrap items-center gap-3 mb-3">
+
+              <div className="mb-3 flex flex-wrap items-center gap-3">
                 <Badge
                   variant="secondary"
-                  className="bg-primary-foreground/20 text-primary-foreground border-0"
+                  className="border-0 bg-primary-foreground/20 text-primary-foreground"
                 >
                   <Clock className="mr-1 h-3 w-3" />
                   {pkg.duration}
                 </Badge>
+
                 {pkg.eco && (
                   <Badge className="gap-1 bg-primary-foreground text-primary">
                     <Leaf className="h-3 w-3" />
@@ -90,9 +124,11 @@ export default async function PackageDetailPage({
                   </Badge>
                 )}
               </div>
+
               <h1 className="text-balance text-3xl font-bold text-primary-foreground md:text-5xl">
                 {pkg.title}
               </h1>
+
               <p className="mt-3 text-3xl font-bold text-primary-foreground/90">
                 {formatRupiah(pkg.price)}
                 <span className="text-base font-normal text-primary-foreground/70">
@@ -104,86 +140,53 @@ export default async function PackageDetailPage({
           </div>
         </div>
 
-        {/* Content */}
         <div className="mx-auto max-w-7xl px-6 py-16">
           <div className="grid gap-12 lg:grid-cols-3">
-            {/* Main content */}
             <div className="lg:col-span-2">
-              {/* Itinerary */}
               <h2 className="flex items-center gap-2 text-2xl font-bold text-foreground">
                 <CalendarDays className="h-6 w-6 text-primary" />
                 Itinerary
               </h2>
+
               <div className="mt-6 flex flex-col gap-4">
-                {pkg.itinerary2 && (
-                  <h3 className="text-lg font-semibold text-foreground">
-                    Hari 1
-                  </h3>
-                )}
-                {pkg.itinerary.map((item, i) => (
-                  <div
-                    key={i}
-                    className="flex items-start gap-4 rounded-xl border border-border bg-card p-5"
-                  >
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
-                      {i + 1}
+                {pkg.itinerarySections.map((section, sectionIndex) => (
+                  <div key={`${section.title ?? "section"}-${sectionIndex}`}>
+                    {section.title && (
+                      <h3 className="mb-4 text-lg font-semibold text-foreground">
+                        {section.title}
+                      </h3>
+                    )}
+
+                    <div className="flex flex-col gap-4">
+                      {section.items.map((item, itemIndex) => (
+                        <div
+                          key={`${sectionIndex}-${itemIndex}-${item}`}
+                          className="flex items-start gap-4 rounded-xl border border-border bg-card p-5"
+                        >
+                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
+                            {itemIndex + 1}
+                          </div>
+                          <p className="text-sm leading-relaxed text-foreground">
+                            {item}
+                          </p>
+                        </div>
+                      ))}
                     </div>
-                    <p className="text-sm leading-relaxed text-foreground">
-                      {item}
-                    </p>
+
+                    {sectionIndex < pkg.itinerarySections.length - 1 && (
+                      <Separator className="my-6" />
+                    )}
                   </div>
                 ))}
-                {pkg.itinerary2 && (
-                  <>
-                    <Separator className="my-6" />
-                    <h3 className="text-lg font-semibold text-foreground">
-                      Hari 2
-                    </h3>
-                    {pkg.itinerary2.map((item, i) => (
-                      <div
-                        key={i}
-                        className="flex items-start gap-4 rounded-xl border border-border bg-card p-5"
-                      >
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
-                          {i + 1}
-                        </div>
-                        <p className="text-sm leading-relaxed text-foreground">
-                          {item}
-                        </p>
-                      </div>
-                    ))}
-                  </>
-                )}
-                {pkg.itinerary3 && (
-                  <>
-                    <Separator className="my-6" />
-                    <h3 className="text-lg font-semibold text-foreground">
-                      Hari 3
-                    </h3>
-                    {pkg.itinerary3.map((item, i) => (
-                      <div
-                        key={i}
-                        className="flex items-start gap-4 rounded-xl border border-border bg-card p-5"
-                      >
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
-                          {i + 1}
-                        </div>
-                        <p className="text-sm leading-relaxed text-foreground">
-                          {item}
-                        </p>
-                      </div>
-                    ))}
-                  </>
-                )}
               </div>
 
               <Separator className="my-10" />
 
-              {/* Includes */}
               <h2 className="flex items-center gap-2 text-2xl font-bold text-foreground">
                 <CheckCircle2 className="h-6 w-6 text-primary" />
                 Yang Termasuk
               </h2>
+
               <div className="mt-6 grid gap-3 sm:grid-cols-2">
                 {pkg.includes.map((item) => (
                   <div
@@ -199,16 +202,15 @@ export default async function PackageDetailPage({
               </div>
             </div>
 
-            {/* Sidebar */}
             <div className="lg:col-span-1">
               <div className="sticky top-24 flex flex-col gap-6">
-                {/* Booking card */}
                 <Card className="border-primary/30">
                   <CardHeader>
                     <CardTitle className="text-lg text-foreground">
                       Pesan Paket Ini
                     </CardTitle>
                   </CardHeader>
+
                   <CardContent className="flex flex-col gap-4">
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-muted-foreground">
@@ -218,6 +220,7 @@ export default async function PackageDetailPage({
                         {formatRupiah(pkg.price)}
                       </span>
                     </div>
+
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-muted-foreground">
                         Durasi
@@ -226,29 +229,33 @@ export default async function PackageDetailPage({
                         {pkg.duration}
                       </span>
                     </div>
+
                     <Separator />
+
                     <div className="flex items-center gap-2 rounded-lg bg-primary/5 p-3">
                       <Users className="h-4 w-4 text-primary" />
                       <span className="text-xs text-muted-foreground">
                         Minimal 2 orang per booking
                       </span>
                     </div>
+
                     <Button className="w-full" size="lg">
                       Pesan Sekarang
                     </Button>
+
                     <p className="text-center text-xs text-muted-foreground">
                       Konfirmasi manual via WhatsApp
                     </p>
                   </CardContent>
                 </Card>
 
-                {/* Other packages */}
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-base text-foreground">
                       Paket Lainnya
                     </CardTitle>
                   </CardHeader>
+
                   <CardContent className="flex flex-col gap-3">
                     {otherPackages.map((p) => (
                       <Link
@@ -257,7 +264,7 @@ export default async function PackageDetailPage({
                         className="group flex items-center justify-between rounded-lg p-3 transition-colors hover:bg-secondary"
                       >
                         <div>
-                          <p className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">
+                          <p className="text-sm font-medium text-foreground transition-colors group-hover:text-primary">
                             {p.title}
                           </p>
                           <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -265,6 +272,7 @@ export default async function PackageDetailPage({
                             {p.duration}
                           </div>
                         </div>
+
                         <div className="text-right">
                           <p className="text-sm font-bold text-foreground">
                             {formatRupiah(p.price)}
@@ -278,9 +286,8 @@ export default async function PackageDetailPage({
                   </CardContent>
                 </Card>
 
-                {/* Eco notice */}
                 <div className="rounded-xl border border-primary/20 bg-primary/5 p-5">
-                  <div className="flex items-center gap-2 mb-2">
+                  <div className="mb-2 flex items-center gap-2">
                     <Leaf className="h-5 w-5 text-primary" />
                     <span className="text-sm font-semibold text-foreground">
                       Wisata Bertanggung Jawab
