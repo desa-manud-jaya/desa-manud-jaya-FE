@@ -12,6 +12,7 @@ import {
   KeyRound,
   LogOut,
   ChevronDown,
+  ReceiptText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import logodesa from "../public/logomanudjaya.svg";
@@ -178,6 +179,14 @@ export function Navbar({
                     align="end"
                     className="w-56 rounded-2xl p-2"
                   >
+                    {currentUser?.role === "traveler" && (
+                      <DropdownMenuItem className="rounded-xl" asChild>
+                        <Link href="/riwayat-pemesanan">
+                          <ReceiptText className="mr-3 h-4 w-4 text-emerald-500" />
+                          Riwayat Booking
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
                     <DropdownMenuItem className="rounded-xl">
                       <UserCog className="mr-3 h-4 w-4 text-sky-500" />
                       Manage Account
@@ -260,6 +269,15 @@ export function Navbar({
                         {displayRoleLabel}
                       </p>
                     </div>
+
+                    {currentUser?.role === "traveler" && (
+                      <Button variant="outline" className="w-full justify-start" asChild>
+                        <Link href="/riwayat-pemesanan">
+                          <ReceiptText className="mr-2 h-4 w-4" />
+                          Riwayat Booking
+                        </Link>
+                      </Button>
+                    )}
 
                     <Button variant="outline" className="w-full justify-start">
                       <UserCog className="mr-2 h-4 w-4" />

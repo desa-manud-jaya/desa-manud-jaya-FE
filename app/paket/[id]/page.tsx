@@ -239,8 +239,10 @@ export default async function PackageDetailPage({
                       </span>
                     </div>
 
-                    <Button className="w-full" size="lg">
-                      Pesan Sekarang
+                    <Button className="w-full" size="lg" asChild>
+                      <Link href={`/pemesanan/${pkg.id}`}>
+                        Pesan Sekarang
+                      </Link>
                     </Button>
 
                     <p className="text-center text-xs text-muted-foreground">
