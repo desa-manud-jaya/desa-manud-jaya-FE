@@ -27,6 +27,26 @@ export type RegisterPartnerFormValues = {
   confirmPassword: string;
 };
 
+export type TravelerFieldErrors = {
+  username?: string;
+  email?: string;
+  phone?: string;
+  password?: string;
+  confirmPassword?: string;
+};
+
+export type PartnerFieldErrors = {
+  username?: string;
+  email?: string;
+  phone?: string;
+  businessName?: string;
+  ownerName?: string;
+  businessType?: string;
+  address?: string;
+  password?: string;
+  confirmPassword?: string;
+};
+
 type RegisterChoiceFormProps = {
   onSwitchToLogin: () => void;
   onSelectTraveler?: () => void;
@@ -35,6 +55,8 @@ type RegisterChoiceFormProps = {
   onSubmitPartner?: (formData: RegisterPartnerFormValues) => void;
   isSubmittingTraveler?: boolean;
   isSubmittingPartner?: boolean;
+  travelerFieldErrors?: TravelerFieldErrors;
+  partnerFieldErrors?: PartnerFieldErrors;
 };
 
 export function RegisterChoiceForm({
@@ -43,6 +65,10 @@ export function RegisterChoiceForm({
   onSelectPartner,
   onSubmitTraveler,
   onSubmitPartner,
+  isSubmittingTraveler = false,
+  isSubmittingPartner = false,
+  travelerFieldErrors = {},
+  partnerFieldErrors = {},
 }: RegisterChoiceFormProps) {
   const [step, setStep] = useState<RegisterStep>("choice");
 
@@ -52,6 +78,8 @@ export function RegisterChoiceForm({
         onBack={() => setStep("choice")}
         onSwitchToLogin={onSwitchToLogin}
         onSubmit={onSubmitTraveler}
+        isSubmitting={isSubmittingTraveler}
+        fieldErrors={travelerFieldErrors}
       />
     );
   }
@@ -62,6 +90,8 @@ export function RegisterChoiceForm({
         onBack={() => setStep("choice")}
         onSwitchToLogin={onSwitchToLogin}
         onSubmit={onSubmitPartner}
+        isSubmitting={isSubmittingPartner}
+        fieldErrors={partnerFieldErrors}
       />
     );
   }

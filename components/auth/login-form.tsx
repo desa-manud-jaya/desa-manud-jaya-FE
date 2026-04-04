@@ -13,6 +13,7 @@ type LoginFormProps = {
     password: string;
     role: LoginRole;
   }) => void;
+  isSubmitting?: boolean;
 };
 
 type LoginFormErrors = {
@@ -20,7 +21,11 @@ type LoginFormErrors = {
   password?: string;
 };
 
-export function LoginForm({ onSwitchToRegister, onSubmit }: LoginFormProps) {
+export function LoginForm({
+  onSwitchToRegister,
+  onSubmit,
+  isSubmitting = false,
+}: LoginFormProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<LoginFormErrors>({});
 
@@ -61,7 +66,8 @@ export function LoginForm({ onSwitchToRegister, onSubmit }: LoginFormProps) {
             name="username"
             type="text"
             placeholder="Username"
-            className="h-12 w-full rounded-xl border border-border bg-white px-4 outline-none focus:ring-2 focus:ring-primary/30"
+            disabled={isSubmitting}
+            className="h-12 w-full rounded-xl border border-border bg-white px-4 outline-none focus:ring-2 focus:ring-primary/30 disabled:cursor-not-allowed disabled:opacity-60"
             onChange={() =>
               setErrors((prev) => ({ ...prev, username: undefined }))
             }
@@ -77,7 +83,8 @@ export function LoginForm({ onSwitchToRegister, onSubmit }: LoginFormProps) {
               name="password"
               type={showPassword ? "text" : "password"}
               placeholder="Password"
-              className="h-12 w-full rounded-xl border border-border bg-white px-4 pr-14 outline-none focus:ring-2 focus:ring-primary/30"
+              disabled={isSubmitting}
+              className="h-12 w-full rounded-xl border border-border bg-white px-4 pr-14 outline-none focus:ring-2 focus:ring-primary/30 disabled:cursor-not-allowed disabled:opacity-60"
               onChange={() =>
                 setErrors((prev) => ({ ...prev, password: undefined }))
               }
@@ -85,7 +92,8 @@ export function LoginForm({ onSwitchToRegister, onSubmit }: LoginFormProps) {
             <button
               type="button"
               onClick={() => setShowPassword((prev) => !prev)}
-              className="absolute inset-y-0 right-0 flex w-14 items-center justify-center text-muted-foreground transition hover:text-foreground"
+              disabled={isSubmitting}
+              className="absolute inset-y-0 right-0 flex w-14 items-center justify-center text-muted-foreground transition hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60"
               aria-label={
                 showPassword ? "Sembunyikan password" : "Tampilkan password"
               }
@@ -109,7 +117,8 @@ export function LoginForm({ onSwitchToRegister, onSubmit }: LoginFormProps) {
           <select
             name="role"
             defaultValue="traveler"
-            className="h-12 w-full rounded-xl border border-border bg-white px-4 text-foreground outline-none focus:ring-2 focus:ring-primary/30"
+            disabled={isSubmitting}
+            className="h-12 w-full rounded-xl border border-border bg-white px-4 text-foreground outline-none focus:ring-2 focus:ring-primary/30 disabled:cursor-not-allowed disabled:opacity-60"
           >
             <option value="traveler">Wisatawan</option>
             <option value="partner">Kemitraan</option>
@@ -117,14 +126,15 @@ export function LoginForm({ onSwitchToRegister, onSubmit }: LoginFormProps) {
           </select>
         </div>
 
-        <Button type="submit" className="h-12 w-full">
-          Masuk
+        <Button type="submit" className="h-12 w-full" disabled={isSubmitting}>
+          {isSubmitting ? "Masuk..." : "Masuk"}
         </Button>
 
         <button
           type="button"
           onClick={onSwitchToRegister}
-          className="text-sm text-primary hover:underline"
+          disabled={isSubmitting}
+          className="text-sm text-primary hover:underline disabled:cursor-not-allowed disabled:opacity-60"
         >
           Belum punya akun? Daftar
         </button>

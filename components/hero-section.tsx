@@ -14,6 +14,7 @@ import {
   login,
 } from "@/lib/services/auth-service";
 import { mapBusinessTypeToApi } from "@/lib/mappers/business-type";
+import { ApiError } from "@/lib/api";
 
 type HeroSectionProps = {
   authMode: AuthMode;
@@ -53,6 +54,9 @@ type PartnerRegisterValues = {
   confirmPassword: string;
 };
 
+type TravelerFieldErrors = Partial<Record<keyof TravelerRegisterValues, string>>;
+type PartnerFieldErrors = Partial<Record<keyof PartnerRegisterValues, string>>;
+
 type FeedbackState = {
   type: "success" | "error";
   message: string;
@@ -69,13 +73,58 @@ export function HeroSection({
 
   const [isSubmittingTraveler, setIsSubmittingTraveler] = useState(false);
   const [isSubmittingPartner, setIsSubmittingPartner] = useState(false);
-  const [feedback, setFeedback] = useState<FeedbackState>(null);
   const [isSubmittingLogin, setIsSubmittingLogin] = useState(false);
+  const [feedback, setFeedback] = useState<FeedbackState>(null);
+
+  const [travelerFieldErrors, setTravelerFieldErrors] =
+    useState<TravelerFieldErrors>({});
+  const [partnerFieldErrors, setPartnerFieldErrors] =
+    useState<PartnerFieldErrors>({});
+
+  const resetRegisterErrors = () => {
+    setTravelerFieldErrors({});
+    setPartnerFieldErrors({});
+  };
+
+  const resetFeedbackAndErrors = () => {
+    setFeedback(null);
+    resetRegisterErrors();
+  };
+
+  function mapBackendRoleToFrontendRole(
+    backendRole: string
+  ): "traveler" | "partner" | "admin" {
+    switch (backendRole) {
+      case "ADMIN":
+        return "admin";
+      case "VENDOR":
+        return "partner";
+      case "USER":
+      default:
+        return "traveler";
+    }
+  }
+
+  function getRoleLabel(role: "traveler" | "partner" | "admin") {
+    switch (role) {
+      case "admin":
+        return "Admin";
+      case "partner":
+        return "Partner";
+      case "traveler":
+      default:
+        return "Traveler";
+    }
+  }
 
   const handleRegisterTraveler = async (values: TravelerRegisterValues) => {
     setFeedback(null);
+    setTravelerFieldErrors({});
 
     if (values.password !== values.confirmPassword) {
+      setTravelerFieldErrors({
+        confirmPassword: "Password dan konfirmasi password tidak sama.",
+      });
       setFeedback({
         type: "error",
         message: "Password dan konfirmasi password tidak sama.",
@@ -91,12 +140,14 @@ export function HeroSection({
         email: values.email.trim(),
         password: values.password,
       };
+
       console.log("REGISTER TRAVELER PAYLOAD:", payload);
 
       const response = await registerTraveler(payload);
 
       console.log("REGISTER TRAVELER RESPONSE:", response);
 
+      setTravelerFieldErrors({});
       setFeedback({
         type: "success",
         message:
@@ -107,12 +158,48 @@ export function HeroSection({
     } catch (error) {
       console.error("REGISTER TRAVELER ERROR:", error);
 
+      if (error instanceof ApiError) {
+        const lowerMessage = error.message.toLowerCase();
+
+        if (error.status === 409) {
+          if (lowerMessage.includes("username")) {
+            const message =
+              "Username sudah terdaftar. Coba gunakan username lain.";
+            setTravelerFieldErrors({ username: message });
+            setFeedback({
+              type: "error",
+              message,
+            });
+            return;
+          }
+
+          if (lowerMessage.includes("email")) {
+            const message = "Email sudah terdaftar. Coba gunakan email lain.";
+            setTravelerFieldErrors({ email: message });
+            setFeedback({
+              type: "error",
+              message,
+            });
+            return;
+          }
+
+          setFeedback({
+            type: "error",
+            message: "Data wisatawan sudah terdaftar.",
+          });
+          return;
+        }
+
+        setFeedback({
+          type: "error",
+          message: error.message,
+        });
+        return;
+      }
+
       setFeedback({
         type: "error",
-        message:
-          error instanceof Error
-            ? error.message
-            : "Terjadi kesalahan saat registrasi wisatawan.",
+        message: "Terjadi kesalahan saat registrasi wisatawan.",
       });
     } finally {
       setIsSubmittingTraveler(false);
@@ -121,8 +208,12 @@ export function HeroSection({
 
   const handleRegisterPartner = async (values: PartnerRegisterValues) => {
     setFeedback(null);
+    setPartnerFieldErrors({});
 
     if (values.password !== values.confirmPassword) {
+      setPartnerFieldErrors({
+        confirmPassword: "Password dan konfirmasi password tidak sama.",
+      });
       setFeedback({
         type: "error",
         message: "Password dan konfirmasi password tidak sama.",
@@ -152,53 +243,74 @@ export function HeroSection({
 
       console.log("REGISTER PARTNER RESPONSE:", response);
 
+      setPartnerFieldErrors({});
       setFeedback({
         type: "success",
         message:
-          "Registrasi mitra berhasil dikirim. Silakan tunggu proses verifikasi dari admin.",
+          "Registrasi partner berhasil. Silakan login menggunakan akun Anda.",
       });
 
       onOpenLogin();
     } catch (error) {
       console.error("REGISTER PARTNER ERROR:", error);
 
+      if (error instanceof ApiError) {
+        const lowerMessage = error.message.toLowerCase();
+
+        if (error.status === 409) {
+          if (lowerMessage.includes("username")) {
+            const message =
+              "Username sudah terdaftar. Coba gunakan username lain.";
+            setPartnerFieldErrors({ username: message });
+            setFeedback({
+              type: "error",
+              message,
+            });
+            return;
+          }
+
+          if (lowerMessage.includes("email")) {
+            const message = "Email sudah terdaftar. Coba gunakan email lain.";
+            setPartnerFieldErrors({ email: message });
+            setFeedback({
+              type: "error",
+              message,
+            });
+            return;
+          }
+
+          if (lowerMessage.includes("phone")) {
+            const message = "Nomor telepon sudah terdaftar.";
+            setPartnerFieldErrors({ phone: message });
+            setFeedback({
+              type: "error",
+              message,
+            });
+            return;
+          }
+
+          setFeedback({
+            type: "error",
+            message: "Data partner sudah terdaftar.",
+          });
+          return;
+        }
+
+        setFeedback({
+          type: "error",
+          message: error.message,
+        });
+        return;
+      }
+
       setFeedback({
         type: "error",
-        message:
-          error instanceof Error
-            ? error.message
-            : "Terjadi kesalahan saat registrasi mitra.",
+        message: "Terjadi kesalahan saat registrasi partner.",
       });
     } finally {
       setIsSubmittingPartner(false);
     }
   };
-
-  function mapBackendRoleToFrontendRole(
-    backendRole: string,
-  ): "traveler" | "partner" | "admin" {
-    switch (backendRole) {
-      case "ADMIN":
-        return "admin";
-      case "VENDOR":
-        return "partner";
-      case "USER":
-      default:
-        return "traveler";
-    }
-  }
-
-  function getRoleLabel(role: "traveler" | "partner" | "admin") {
-    switch (role) {
-      case "admin":
-        return "Admin";
-      case "partner":
-        return "Partner";
-      case "traveler":
-      default:
-        return "Traveler";
-    }
-  }
 
   const handleLoginSubmit = async (values: {
     username: string;
@@ -315,7 +427,10 @@ export function HeroSection({
                 size="lg"
                 variant="outline"
                 className="border-primary-foreground/30 bg-primary-foreground/10 text-primary-foreground hover:bg-primary-foreground/20 hover:text-primary-foreground"
-                onClick={onOpenRegister}
+                onClick={() => {
+                  resetFeedbackAndErrors();
+                  onOpenRegister();
+                }}
               >
                 Gabung Kemitraan Kami
               </Button>
@@ -367,7 +482,7 @@ export function HeroSection({
             <button
               type="button"
               onClick={() => {
-                setFeedback(null);
+                resetFeedbackAndErrors();
                 onCloseAuth();
               }}
               className="mb-8 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
@@ -392,29 +507,32 @@ export function HeroSection({
             {authMode === "register" ? (
               <RegisterChoiceForm
                 onSwitchToLogin={() => {
-                  setFeedback(null);
+                  resetFeedbackAndErrors();
                   onOpenLogin();
                 }}
                 onSelectTraveler={() => {
-                  setFeedback(null);
+                  resetFeedbackAndErrors();
                   console.log("pilih traveler");
                 }}
                 onSelectPartner={() => {
-                  setFeedback(null);
+                  resetFeedbackAndErrors();
                   console.log("pilih partner");
                 }}
                 onSubmitTraveler={handleRegisterTraveler}
                 onSubmitPartner={handleRegisterPartner}
                 isSubmittingTraveler={isSubmittingTraveler}
                 isSubmittingPartner={isSubmittingPartner}
+                travelerFieldErrors={travelerFieldErrors}
+                partnerFieldErrors={partnerFieldErrors}
               />
             ) : authMode === "login" ? (
               <LoginForm
                 onSwitchToRegister={() => {
-                  setFeedback(null);
+                  resetFeedbackAndErrors();
                   onOpenRegister();
                 }}
                 onSubmit={handleLoginSubmit}
+                isSubmitting={isSubmittingLogin}
               />
             ) : null}
           </div>

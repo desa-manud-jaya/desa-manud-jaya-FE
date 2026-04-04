@@ -1,13 +1,53 @@
 import { API_BASE_URL } from "@/lib/api-config";
 
+export class ApiError extends Error {
+  status: number;
+  data?: unknown;
+
+  constructor(message: string, status: number, data?: unknown) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+    this.data = data;
+  }
+}
+
+function normalizeApiErrorMessage(status: number, message: string) {
+  const lowerMessage = message.toLowerCase();
+
+  if (status === 409) {
+    if (lowerMessage.includes("username")) {
+      return "Username sudah terdaftar. Coba gunakan username lain.";
+    }
+
+    if (lowerMessage.includes("email")) {
+      return "Email sudah terdaftar. Coba gunakan email lain.";
+    }
+
+    if (lowerMessage.includes("phone")) {
+      return "Nomor telepon sudah terdaftar.";
+    }
+
+    if (lowerMessage.includes("ktp")) {
+      return "Nomor KTP sudah terdaftar.";
+    }
+
+    return "Data yang kamu masukkan sudah terdaftar.";
+  }
+
+  return message;
+}
+
 export async function apiFetch<T>(
   endpoint: string,
   options?: RequestInit
 ): Promise<T> {
+  const isFormData = options?.body instanceof FormData;
+
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     ...options,
     headers: {
-      "Content-Type": "application/json",
+      ...(isFormData ? {} : { "Content-Type": "application/json" }),
       ...(options?.headers || {}),
     },
   });
@@ -29,7 +69,9 @@ export async function apiFetch<T>(
       errorMessage = responseData;
     }
 
-    throw new Error(errorMessage);
+    errorMessage = normalizeApiErrorMessage(response.status, errorMessage);
+
+    throw new ApiError(errorMessage, response.status, responseData);
   }
 
   return responseData as T;

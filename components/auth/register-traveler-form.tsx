@@ -1,20 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  type TravelerFormValues,
-  validateTravelerForm,
-} from "@/components/auth/validator";
+import { validateTravelerForm } from "@/components/auth/validator";
 
-type RegisterTravelerFormProps = {
-  onBack: () => void;
-  onSwitchToLogin: () => void;
-  onSubmit?: (formData: RegisterTravelerFormValues) => void;
-};
-
-type RegisterTravelerFormValues = {
+export type RegisterTravelerFormValues = {
   username: string;
   fullName: string;
   email: string;
@@ -22,9 +13,18 @@ type RegisterTravelerFormValues = {
   password: string;
   confirmPassword: string;
 };
-type TravelerFormErrors = Partial<
+
+export type TravelerFormErrors = Partial<
   Record<keyof RegisterTravelerFormValues, string>
 >;
+
+type RegisterTravelerFormProps = {
+  onBack: () => void;
+  onSwitchToLogin: () => void;
+  onSubmit?: (formData: RegisterTravelerFormValues) => void;
+  isSubmitting?: boolean;
+  fieldErrors?: TravelerFormErrors;
+};
 
 const inputClassName =
   "h-14 w-full rounded-2xl border bg-white px-5 pr-14 text-base text-foreground placeholder:text-muted-foreground/80 outline-none transition focus:ring-2 focus:ring-primary/20";
@@ -33,21 +33,49 @@ export function RegisterTravelerForm({
   onBack,
   onSwitchToLogin,
   onSubmit,
+  isSubmitting = false,
+  fieldErrors = {},
 }: RegisterTravelerFormProps) {
   const [errors, setErrors] = useState<TravelerFormErrors>({});
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [dismissedServerErrors, setDismissedServerErrors] = useState<
+    Partial<Record<keyof RegisterTravelerFormValues, boolean>>
+  >({});
+
+  useEffect(() => {
+    setDismissedServerErrors({});
+  }, [fieldErrors]);
+
+  const getFieldError = (field: keyof RegisterTravelerFormValues) => {
+    if (errors[field]) return errors[field];
+    if (dismissedServerErrors[field]) return undefined;
+    return fieldErrors[field];
+  };
+
+  const mergedErrors = useMemo(
+    () =>
+      ({
+        username: getFieldError("username"),
+        fullName: getFieldError("fullName"),
+        email: getFieldError("email"),
+        phone: getFieldError("phone"),
+        password: getFieldError("password"),
+        confirmPassword: getFieldError("confirmPassword"),
+      }) satisfies TravelerFormErrors,
+    [errors, fieldErrors, dismissedServerErrors]
+  );
 
   const getInputClassName = (field: keyof RegisterTravelerFormValues) =>
     `${inputClassName} ${
-      errors[field]
+      mergedErrors[field]
         ? "border-red-500 focus:border-red-500 focus:ring-red-200"
         : "border-stone-300 focus:border-primary"
     }`;
 
   const clearFieldError = (field: keyof RegisterTravelerFormValues) => {
-    if (!errors[field]) return;
     setErrors((prev) => ({ ...prev, [field]: undefined }));
+    setDismissedServerErrors((prev) => ({ ...prev, [field]: true }));
   };
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -55,10 +83,10 @@ export function RegisterTravelerForm({
 
     const formData = new FormData(event.currentTarget);
     const values: RegisterTravelerFormValues = {
-      username: String(formData.get("username") ?? ""),
-      fullName: String(formData.get("fullName") ?? ""),
-      email: String(formData.get("email") ?? ""),
-      phone: String(formData.get("phone") ?? ""),
+      username: String(formData.get("username") ?? "").trim(),
+      fullName: String(formData.get("fullName") ?? "").trim(),
+      email: String(formData.get("email") ?? "").trim(),
+      phone: String(formData.get("phone") ?? "").trim(),
       password: String(formData.get("password") ?? ""),
       confirmPassword: String(formData.get("confirmPassword") ?? ""),
     };
@@ -71,18 +99,6 @@ export function RegisterTravelerForm({
     }
 
     setErrors({});
-
-    const payload = {
-      role: "traveler",
-      fullName: values.fullName,
-      email: values.email,
-      phone: values.phone,
-      password: values.password,
-    };
-
-    console.log("REGISTER TRAVELER FORM VALUES:", values);
-    console.log("REGISTER TRAVELER API PAYLOAD:", payload);
-
     onSubmit?.(values);
   };
 
@@ -108,10 +124,11 @@ export function RegisterTravelerForm({
             className={getInputClassName("username")}
             onChange={() => clearFieldError("username")}
           />
-          {errors.username && (
-            <p className="mt-2 text-sm text-red-500">{errors.username}</p>
+          {mergedErrors.username && (
+            <p className="mt-2 text-sm text-red-500">{mergedErrors.username}</p>
           )}
         </div>
+
         <div>
           <input
             name="fullName"
@@ -120,8 +137,8 @@ export function RegisterTravelerForm({
             className={getInputClassName("fullName")}
             onChange={() => clearFieldError("fullName")}
           />
-          {errors.fullName && (
-            <p className="mt-2 text-sm text-red-500">{errors.fullName}</p>
+          {mergedErrors.fullName && (
+            <p className="mt-2 text-sm text-red-500">{mergedErrors.fullName}</p>
           )}
         </div>
 
@@ -133,8 +150,8 @@ export function RegisterTravelerForm({
             className={getInputClassName("email")}
             onChange={() => clearFieldError("email")}
           />
-          {errors.email && (
-            <p className="mt-2 text-sm text-red-500">{errors.email}</p>
+          {mergedErrors.email && (
+            <p className="mt-2 text-sm text-red-500">{mergedErrors.email}</p>
           )}
         </div>
 
@@ -146,8 +163,8 @@ export function RegisterTravelerForm({
             className={getInputClassName("phone")}
             onChange={() => clearFieldError("phone")}
           />
-          {errors.phone && (
-            <p className="mt-2 text-sm text-red-500">{errors.phone}</p>
+          {mergedErrors.phone && (
+            <p className="mt-2 text-sm text-red-500">{mergedErrors.phone}</p>
           )}
         </div>
 
@@ -175,8 +192,8 @@ export function RegisterTravelerForm({
               )}
             </button>
           </div>
-          {errors.password && (
-            <p className="mt-2 text-sm text-red-500">{errors.password}</p>
+          {mergedErrors.password && (
+            <p className="mt-2 text-sm text-red-500">{mergedErrors.password}</p>
           )}
         </div>
 
@@ -206,22 +223,27 @@ export function RegisterTravelerForm({
               )}
             </button>
           </div>
-          {errors.confirmPassword && (
+          {mergedErrors.confirmPassword && (
             <p className="mt-2 text-sm text-red-500">
-              {errors.confirmPassword}
+              {mergedErrors.confirmPassword}
             </p>
           )}
         </div>
 
         <div className="space-y-3 pt-2">
-          <Button type="submit" className="h-14 w-full rounded-2xl text-base">
-            Daftar
+          <Button
+            type="submit"
+            className="h-14 w-full rounded-2xl text-base"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Mendaftarkan..." : "Daftar"}
           </Button>
 
           <button
             type="button"
             onClick={onBack}
-            className="w-full rounded-2xl border border-stone-300 bg-white px-5 py-4 text-base font-medium text-foreground transition hover:bg-stone-50"
+            disabled={isSubmitting}
+            className="w-full rounded-2xl border border-stone-300 bg-white px-5 py-4 text-base font-medium text-foreground transition hover:bg-stone-50 disabled:cursor-not-allowed disabled:opacity-60"
           >
             Kembali
           </button>

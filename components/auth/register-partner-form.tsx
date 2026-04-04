@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-type PartnerFormData = {
+export type PartnerFormData = {
   username: string;
   businessName: string;
   ownerName: string;
@@ -16,34 +16,50 @@ type PartnerFormData = {
   confirmPassword: string;
 };
 
+export type PartnerFieldErrors = Partial<Record<keyof PartnerFormData, string>>;
+
 type RegisterPartnerFormProps = {
   onBack: () => void;
   onSwitchToLogin: () => void;
   onSubmit?: (formData: PartnerFormData) => void;
+  isSubmitting?: boolean;
+  fieldErrors?: PartnerFieldErrors;
 };
-
-type FieldErrors = Partial<Record<keyof PartnerFormData, string>>;
 
 export function RegisterPartnerForm({
   onBack,
   onSwitchToLogin,
   onSubmit,
+  isSubmitting = false,
+  fieldErrors = {},
 }: RegisterPartnerFormProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [errors, setErrors] = useState<FieldErrors>({});
+  const [errors, setErrors] = useState<PartnerFieldErrors>({});
+  const [dismissedServerErrors, setDismissedServerErrors] = useState<
+    Partial<Record<keyof PartnerFormData, boolean>>
+  >({});
+
+  useEffect(() => {
+    setDismissedServerErrors({});
+  }, [fieldErrors]);
 
   const validateForm = (data: PartnerFormData) => {
-    const newErrors: FieldErrors = {};
+    const newErrors: PartnerFieldErrors = {};
 
     if (!data.username.trim()) newErrors.username = "Username wajib diisi";
-    if (!data.businessName.trim())
+    if (!data.businessName.trim()) {
       newErrors.businessName = "Nama usaha wajib diisi";
-    if (!data.ownerName.trim())
+    }
+    if (!data.ownerName.trim()) {
       newErrors.ownerName = "Nama pemilik wajib diisi";
-    if (!data.businessType.trim())
+    }
+    if (!data.businessType.trim()) {
       newErrors.businessType = "Jenis usaha wajib dipilih";
-    if (!data.address.trim()) newErrors.address = "Alamat usaha wajib diisi";
+    }
+    if (!data.address.trim()) {
+      newErrors.address = "Alamat usaha wajib diisi";
+    }
     if (!data.email.trim()) newErrors.email = "Email wajib diisi";
     if (!data.phone.trim()) newErrors.phone = "Nomor telepon wajib diisi";
     if (!data.password.trim()) newErrors.password = "Password wajib diisi";
@@ -67,6 +83,33 @@ export function RegisterPartnerForm({
     }
 
     return newErrors;
+  };
+
+  const getFieldError = (fieldName: keyof PartnerFormData) => {
+    if (errors[fieldName]) return errors[fieldName];
+    if (dismissedServerErrors[fieldName]) return undefined;
+    return fieldErrors[fieldName];
+  };
+
+  const mergedErrors = useMemo(
+    () =>
+      ({
+        username: getFieldError("username"),
+        businessName: getFieldError("businessName"),
+        ownerName: getFieldError("ownerName"),
+        businessType: getFieldError("businessType"),
+        address: getFieldError("address"),
+        email: getFieldError("email"),
+        phone: getFieldError("phone"),
+        password: getFieldError("password"),
+        confirmPassword: getFieldError("confirmPassword"),
+      }) satisfies PartnerFieldErrors,
+    [errors, fieldErrors, dismissedServerErrors]
+  );
+
+  const clearFieldError = (fieldName: keyof PartnerFormData) => {
+    setErrors((prev) => ({ ...prev, [fieldName]: undefined }));
+    setDismissedServerErrors((prev) => ({ ...prev, [fieldName]: true }));
   };
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -98,15 +141,12 @@ export function RegisterPartnerForm({
   };
 
   const getInputClassName = (fieldName: keyof PartnerFormData) =>
-    `h-12 w-full rounded-xl border bg-white px-4 outline-none focus:ring-2 focus:ring-primary/30 ${
-      errors[fieldName] ? "border-red-500" : "border-border"
+    `h-12 w-full rounded-xl border bg-white px-4 outline-none transition focus:ring-2 focus:ring-primary/30 ${
+      mergedErrors[fieldName] ? "border-red-500" : "border-border"
     }`;
 
   return (
-    <>
-
-
-      <div className="w-full">
+    <div className="w-full">
       <h2 className="text-4xl font-semibold leading-tight text-foreground md:text-5xl">
         Daftar sebagai
         <br />
@@ -125,9 +165,10 @@ export function RegisterPartnerForm({
             type="text"
             placeholder="Username"
             className={getInputClassName("username")}
+            onChange={() => clearFieldError("username")}
           />
-          {errors.username && (
-            <p className="mt-1 text-sm text-red-500">{errors.username}</p>
+          {mergedErrors.username && (
+            <p className="mt-1 text-sm text-red-500">{mergedErrors.username}</p>
           )}
         </div>
 
@@ -137,9 +178,12 @@ export function RegisterPartnerForm({
             type="text"
             placeholder="Nama Usaha"
             className={getInputClassName("businessName")}
+            onChange={() => clearFieldError("businessName")}
           />
-          {errors.businessName && (
-            <p className="mt-1 text-sm text-red-500">{errors.businessName}</p>
+          {mergedErrors.businessName && (
+            <p className="mt-1 text-sm text-red-500">
+              {mergedErrors.businessName}
+            </p>
           )}
         </div>
 
@@ -149,9 +193,12 @@ export function RegisterPartnerForm({
             type="text"
             placeholder="Nama Pemilik"
             className={getInputClassName("ownerName")}
+            onChange={() => clearFieldError("ownerName")}
           />
-          {errors.ownerName && (
-            <p className="mt-1 text-sm text-red-500">{errors.ownerName}</p>
+          {mergedErrors.ownerName && (
+            <p className="mt-1 text-sm text-red-500">
+              {mergedErrors.ownerName}
+            </p>
           )}
         </div>
 
@@ -160,6 +207,7 @@ export function RegisterPartnerForm({
             name="businessType"
             className={getInputClassName("businessType")}
             defaultValue=""
+            onChange={() => clearFieldError("businessType")}
           >
             <option value="" disabled>
               Pilih Jenis Usaha
@@ -178,8 +226,10 @@ export function RegisterPartnerForm({
               Local Product / Souvenir - UMKM
             </option>
           </select>
-          {errors.businessType && (
-            <p className="mt-1 text-sm text-red-500">{errors.businessType}</p>
+          {mergedErrors.businessType && (
+            <p className="mt-1 text-sm text-red-500">
+              {mergedErrors.businessType}
+            </p>
           )}
         </div>
 
@@ -189,9 +239,10 @@ export function RegisterPartnerForm({
             type="text"
             placeholder="Alamat Usaha"
             className={getInputClassName("address")}
+            onChange={() => clearFieldError("address")}
           />
-          {errors.address && (
-            <p className="mt-1 text-sm text-red-500">{errors.address}</p>
+          {mergedErrors.address && (
+            <p className="mt-1 text-sm text-red-500">{mergedErrors.address}</p>
           )}
         </div>
 
@@ -201,9 +252,10 @@ export function RegisterPartnerForm({
             type="email"
             placeholder="Email"
             className={getInputClassName("email")}
+            onChange={() => clearFieldError("email")}
           />
-          {errors.email && (
-            <p className="mt-1 text-sm text-red-500">{errors.email}</p>
+          {mergedErrors.email && (
+            <p className="mt-1 text-sm text-red-500">{mergedErrors.email}</p>
           )}
         </div>
 
@@ -213,9 +265,10 @@ export function RegisterPartnerForm({
             type="tel"
             placeholder="Nomor Telepon"
             className={getInputClassName("phone")}
+            onChange={() => clearFieldError("phone")}
           />
-          {errors.phone && (
-            <p className="mt-1 text-sm text-red-500">{errors.phone}</p>
+          {mergedErrors.phone && (
+            <p className="mt-1 text-sm text-red-500">{mergedErrors.phone}</p>
           )}
         </div>
 
@@ -226,11 +279,15 @@ export function RegisterPartnerForm({
               type={showPassword ? "text" : "password"}
               placeholder="Password"
               className={`${getInputClassName("password")} pr-12`}
+              onChange={() => clearFieldError("password")}
             />
             <button
               type="button"
               onClick={() => setShowPassword((prev) => !prev)}
               className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              aria-label={
+                showPassword ? "Sembunyikan password" : "Tampilkan password"
+              }
             >
               {showPassword ? (
                 <EyeOff className="h-5 w-5" />
@@ -239,8 +296,8 @@ export function RegisterPartnerForm({
               )}
             </button>
           </div>
-          {errors.password && (
-            <p className="mt-1 text-sm text-red-500">{errors.password}</p>
+          {mergedErrors.password && (
+            <p className="mt-1 text-sm text-red-500">{mergedErrors.password}</p>
           )}
         </div>
 
@@ -251,11 +308,17 @@ export function RegisterPartnerForm({
               type={showConfirmPassword ? "text" : "password"}
               placeholder="Konfirmasi Password"
               className={`${getInputClassName("confirmPassword")} pr-12`}
+              onChange={() => clearFieldError("confirmPassword")}
             />
             <button
               type="button"
               onClick={() => setShowConfirmPassword((prev) => !prev)}
               className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              aria-label={
+                showConfirmPassword
+                  ? "Sembunyikan konfirmasi password"
+                  : "Tampilkan konfirmasi password"
+              }
             >
               {showConfirmPassword ? (
                 <EyeOff className="h-5 w-5" />
@@ -264,23 +327,25 @@ export function RegisterPartnerForm({
               )}
             </button>
           </div>
-          {errors.confirmPassword && (
+          {mergedErrors.confirmPassword && (
             <p className="mt-1 text-sm text-red-500">
-              {errors.confirmPassword}
+              {mergedErrors.confirmPassword}
             </p>
           )}
         </div>
 
-        <Button type="submit" className="h-12 w-full">
-          Daftar
+        <Button type="submit" className="h-12 w-full" disabled={isSubmitting}>
+          {isSubmitting ? "Mendaftarkan..." : "Daftar"}
         </Button>
+
         <button
-            type="button"
-            onClick={onBack}
-            className="w-full rounded-2xl border border-stone-300 bg-white px-5 py-4 text-base font-medium text-foreground transition hover:bg-stone-50"
-          >
-            Kembali
-          </button>
+          type="button"
+          onClick={onBack}
+          disabled={isSubmitting}
+          className="w-full rounded-2xl border border-stone-300 bg-white px-5 py-4 text-base font-medium text-foreground transition hover:bg-stone-50 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          Kembali
+        </button>
       </form>
 
       <p className="mt-4 text-center text-sm text-muted-foreground">
@@ -294,7 +359,6 @@ export function RegisterPartnerForm({
         </button>
         .
       </p>
-      </div>
-    </>
+    </div>
   );
 }
