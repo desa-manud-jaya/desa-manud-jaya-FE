@@ -63,7 +63,8 @@ export default async function BookingPage({
               Booking Paket Wisata
             </h1>
             <p className="mt-4 max-w-2xl text-lg text-primary-foreground/80">
-              Lengkapi data pemesanan Anda untuk paket <strong>{pkg.title}</strong>.
+              Lengkapi data pemesanan Anda untuk paket{" "}
+              <strong>{pkg.title}</strong>.
             </p>
           </div>
         </div>
@@ -76,6 +77,7 @@ export default async function BookingPage({
               duration: pkg.duration,
               price: pkg.price,
               image: pkg.image,
+              businessId: pkg.businessId,
             }}
           />
         </div>

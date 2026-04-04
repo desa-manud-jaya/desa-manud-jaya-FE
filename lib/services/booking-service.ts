@@ -1,4 +1,9 @@
-import type { CreateBookingInput, TravelerBooking } from "@/lib/types/booking";
+import { apiFetch } from "@/lib/api";
+import type {
+  CreateBookingInput,
+  TravelerBooking,
+  UserBookingHistoryApiResponse,
+} from "@/lib/types/booking";
 
 export const BOOKING_STORAGE_KEY = "manud-jaya-bookings";
 export const TRAVELER_STORAGE_KEY = "manud-jaya-traveler-session";
@@ -12,6 +17,19 @@ export type LoggedInUser = {
   email: string;
   role: "traveler" | "partner" | "admin";
   roleLabel: string;
+};
+
+export type CreateBookingApiPayload = {
+  businessId: string;
+  packageId: string;
+  quantity: number;
+};
+
+export type CreateBookingApiResponse = {
+  id?: string;
+  bookingCode?: string;
+  status?: string;
+  message?: string;
 };
 
 function canUseStorage() {
@@ -55,6 +73,23 @@ export function getCurrentUser(): LoggedInUser | null {
 
   return parsed ?? null;
 }
+export async function getUserBookingHistoryApi(
+  userId: string,
+  token: string,
+  page = 0,
+  size = 10
+) {
+  return apiFetch<UserBookingHistoryApiResponse>(
+    `/user/bookings/${userId}?page=${page}&size=${size}`,
+    {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      cache: "no-store",
+    }
+  );
+}
 
 export function getAllBookings(): TravelerBooking[] {
   if (!canUseStorage()) return [];
@@ -71,6 +106,18 @@ export function getAllBookings(): TravelerBooking[] {
       (a, b) =>
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
     );
+}
+export async function createBookingApi(
+  payload: CreateBookingApiPayload,
+  token: string
+) {
+  return apiFetch<CreateBookingApiResponse>("/user/bookings", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  });
 }
 
 export function getBookingsByUserId(userId: string) {

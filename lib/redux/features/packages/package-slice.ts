@@ -1,5 +1,4 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { packages as mockPackages } from "@/lib/data";
 import {
   getApprovedPackages,
   type ApprovedPackageApiItem,
@@ -33,18 +32,6 @@ function formatPackageDuration(duration: number | string | undefined): string {
   return "-";
 }
 
-function mapMockPackages(): PackageCardItem[] {
-  return mockPackages.map((pkg) => ({
-    id: pkg.id,
-    title: pkg.title,
-    duration: pkg.duration,
-    price: pkg.price,
-    eco: pkg.eco,
-    includes: pkg.includes,
-    image: pkg.image,
-  }));
-}
-
 function mapApiPackageToCard(pkg: ApprovedPackageApiItem): PackageCardItem {
   return {
     id: pkg.id,
@@ -57,27 +44,8 @@ function mapApiPackageToCard(pkg: ApprovedPackageApiItem): PackageCardItem {
   };
 }
 
-function mergePackages(
-  mockItems: PackageCardItem[],
-  apiItems: PackageCardItem[]
-): PackageCardItem[] {
-  const merged = [...mockItems, ...apiItems];
-  const seen = new Set<string>();
-
-  return merged.filter((item) => {
-    if (seen.has(item.id)) {
-      return false;
-    }
-
-    seen.add(item.id);
-    return true;
-  });
-}
-
-const initialMockItems = mapMockPackages();
-
 const initialState: PackagesState = {
-  items: initialMockItems,
+  items: [],
   loading: false,
   error: null,
 };
@@ -85,8 +53,7 @@ const initialState: PackagesState = {
 export const fetchApprovedPackages = createAsyncThunk(
   "packages/fetchApprovedPackages",
   async () => {
-    const response = await getApprovedPackages();
-    return response;
+    return await getApprovedPackages();
   }
 );
 
@@ -102,18 +69,12 @@ const packageSlice = createSlice({
       })
       .addCase(fetchApprovedPackages.fulfilled, (state, action) => {
         state.loading = false;
-
-        const apiItems = action.payload.map(mapApiPackageToCard);
-
-        state.items =
-          apiItems.length > 0
-            ? mergePackages(initialMockItems, apiItems)
-            : initialMockItems;
+        state.items = action.payload.map(mapApiPackageToCard);
       })
       .addCase(fetchApprovedPackages.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || "Failed to fetch packages";
-        state.items = initialMockItems;
+        state.items = [];
       });
   },
 });

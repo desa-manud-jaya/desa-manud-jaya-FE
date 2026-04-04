@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { formatRupiah } from "@/lib/data";
 import {
-  createBooking,
+  createBookingApi,
   getCurrentUser,
   type LoggedInUser,
 } from "@/lib/services/booking-service";
@@ -24,6 +24,7 @@ type BookingFormProps = {
     duration: string;
     price: number;
     image: string;
+    businessId: string | null;
   };
 };
 
@@ -63,7 +64,10 @@ function validateBookingForm(values: BookingFormValues): BookingFormErrors {
     errors.travelDate = "Tanggal keberangkatan wajib dipilih.";
   }
 
-  if (!Number.isFinite(values.participantCount) || values.participantCount < 1) {
+  if (
+    !Number.isFinite(values.participantCount) ||
+    values.participantCount < 1
+  ) {
     errors.participantCount = "Jumlah peserta minimal 1 orang.";
   }
 
@@ -114,7 +118,7 @@ export function BookingForm({ packageItem }: BookingFormProps) {
     setErrors((prev) => ({ ...prev, [field]: undefined }));
   };
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     const sanitizedValues: BookingFormValues = {
@@ -136,34 +140,45 @@ export function BookingForm({ packageItem }: BookingFormProps) {
       });
       return;
     }
+    if (!packageItem.businessId) {
+      setErrors({
+        notes: "Business ID paket tidak ditemukan. Silakan coba lagi.",
+      });
+      return;
+    }
 
     try {
       setIsSubmitting(true);
 
-      const booking = createBooking({
-        userId: currentUser.id,
-        username: currentUser.username,
+      const payload = {
+        businessId: packageItem.businessId,
         packageId: packageItem.id,
-        packageTitle: packageItem.title,
-        packageImage: packageItem.image,
-        travelDate: sanitizedValues.travelDate,
-        participantCount: sanitizedValues.participantCount,
-        contactName: sanitizedValues.contactName,
-        contactPhone: sanitizedValues.contactPhone,
-        notes: sanitizedValues.notes,
-        pricePerPerson: packageItem.price,
-      });
+        quantity: sanitizedValues.participantCount,
+      };
+
+      console.log("BOOKING API PAYLOAD:", payload);
+      console.log("BOOKING CURRENT USER:", currentUser);
+      console.log("BOOKING TOKEN:", currentUser.token);
+
+      const response = await createBookingApi(
+        {
+          businessId: packageItem.businessId,
+          packageId: packageItem.id,
+          quantity: sanitizedValues.participantCount,
+        },
+        currentUser.token,
+      );
 
       setSuccessState({
-        bookingCode: booking.bookingCode,
-        totalPrice: booking.totalPrice,
+        bookingCode: response.bookingCode ?? response.id ?? "",
+        totalPrice,
       });
     } catch (error) {
       setErrors({
         notes:
           error instanceof Error
             ? error.message
-            : "Terjadi kesalahan saat menyimpan booking.",
+            : "Terjadi kesalahan saat membuat booking.",
       });
     } finally {
       setIsSubmitting(false);
@@ -191,7 +206,8 @@ export function BookingForm({ packageItem }: BookingFormProps) {
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            Anda harus masuk sebagai wisatawan terlebih dahulu untuk memesan paket ini.
+            Anda harus masuk sebagai wisatawan terlebih dahulu untuk memesan
+            paket ini.
           </p>
           <div className="flex flex-wrap gap-3">
             <Button asChild>
@@ -216,7 +232,8 @@ export function BookingForm({ packageItem }: BookingFormProps) {
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            Akun yang sedang aktif bukan akun wisatawan. Silakan masuk menggunakan akun traveler untuk melakukan pemesanan.
+            Akun yang sedang aktif bukan akun wisatawan. Silakan masuk
+            menggunakan akun traveler untuk melakukan pemesanan.
           </p>
           <Button variant="outline" asChild>
             <Link href="/">Kembali ke Beranda</Link>
@@ -237,14 +254,16 @@ export function BookingForm({ packageItem }: BookingFormProps) {
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-emerald-700/90">
-            Booking Anda untuk paket <strong>{packageItem.title}</strong> berhasil disimpan.
+            Booking Anda untuk paket <strong>{packageItem.title}</strong>{" "}
+            berhasil disimpan.
           </p>
           <div className="rounded-xl border border-emerald-200 bg-white p-4 text-sm text-foreground">
             <p>
               <strong>Kode booking:</strong> {successState.bookingCode}
             </p>
             <p>
-              <strong>Total pembayaran:</strong> {formatRupiah(successState.totalPrice)}
+              <strong>Total pembayaran:</strong>{" "}
+              {formatRupiah(successState.totalPrice)}
             </p>
             <p>
               <strong>Status:</strong> Menunggu Konfirmasi
@@ -255,7 +274,9 @@ export function BookingForm({ packageItem }: BookingFormProps) {
               Lihat Riwayat Booking
             </Button>
             <Button variant="outline" asChild>
-              <Link href={`/paket/${packageItem.id}`}>Kembali ke Detail Paket</Link>
+              <Link href={`/paket/${packageItem.id}`}>
+                Kembali ke Detail Paket
+              </Link>
             </Button>
           </div>
         </CardContent>
@@ -278,11 +299,15 @@ export function BookingForm({ packageItem }: BookingFormProps) {
                 </label>
                 <Input
                   value={formValues.contactName}
-                  onChange={(event) => updateField("contactName", event.target.value)}
+                  onChange={(event) =>
+                    updateField("contactName", event.target.value)
+                  }
                   placeholder="Masukkan nama kontak"
                 />
                 {errors.contactName && (
-                  <p className="mt-2 text-sm text-red-500">{errors.contactName}</p>
+                  <p className="mt-2 text-sm text-red-500">
+                    {errors.contactName}
+                  </p>
                 )}
               </div>
 
@@ -292,11 +317,15 @@ export function BookingForm({ packageItem }: BookingFormProps) {
                 </label>
                 <Input
                   value={formValues.contactPhone}
-                  onChange={(event) => updateField("contactPhone", event.target.value)}
+                  onChange={(event) =>
+                    updateField("contactPhone", event.target.value)
+                  }
                   placeholder="08xxxxxxxxxx"
                 />
                 {errors.contactPhone && (
-                  <p className="mt-2 text-sm text-red-500">{errors.contactPhone}</p>
+                  <p className="mt-2 text-sm text-red-500">
+                    {errors.contactPhone}
+                  </p>
                 )}
               </div>
             </div>
@@ -310,10 +339,14 @@ export function BookingForm({ packageItem }: BookingFormProps) {
                   type="date"
                   min={getMinTravelDate()}
                   value={formValues.travelDate}
-                  onChange={(event) => updateField("travelDate", event.target.value)}
+                  onChange={(event) =>
+                    updateField("travelDate", event.target.value)
+                  }
                 />
                 {errors.travelDate && (
-                  <p className="mt-2 text-sm text-red-500">{errors.travelDate}</p>
+                  <p className="mt-2 text-sm text-red-500">
+                    {errors.travelDate}
+                  </p>
                 )}
               </div>
 
@@ -395,11 +428,15 @@ export function BookingForm({ packageItem }: BookingFormProps) {
 
           <div className="flex items-center justify-between text-base">
             <span className="font-semibold text-foreground">Total</span>
-            <span className="font-bold text-primary">{formatRupiah(totalPrice)}</span>
+            <span className="font-bold text-primary">
+              {formatRupiah(totalPrice)}
+            </span>
           </div>
 
           <div className="rounded-xl bg-primary/5 p-4 text-xs leading-relaxed text-muted-foreground">
-            Setelah booking dibuat, status awal akan menjadi <strong>Menunggu Konfirmasi</strong>. Admin dapat menghubungi Anda untuk tindak lanjut pembayaran atau konfirmasi perjalanan.
+            Setelah booking dibuat, status awal akan menjadi{" "}
+            <strong>Menunggu Konfirmasi</strong>. Admin dapat menghubungi Anda
+            untuk tindak lanjut pembayaran atau konfirmasi perjalanan.
           </div>
         </CardContent>
       </Card>

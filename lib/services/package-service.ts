@@ -1,18 +1,4 @@
 import { apiFetch } from "@/lib/api";
-import { packages as mockPackages } from "@/lib/data";
-
-type MockPackageItem = {
-  id: string;
-  title: string;
-  duration: string;
-  price: number;
-  eco: boolean;
-  itinerary: string[];
-  itinerary2?: string[];
-  itinerary3?: string[];
-  includes: string[];
-  image: string;
-};
 
 export type ApprovedPackageApiItem = {
   id: string;
@@ -45,9 +31,7 @@ export type ApprovedPackageApiItem = {
 
 type ApprovedPackagesResponse =
   | ApprovedPackageApiItem[]
-  | {
-      data?: ApprovedPackageApiItem[];
-    };
+  | { data?: ApprovedPackageApiItem[] };
 
 export type PackageListItem = {
   id: string;
@@ -73,44 +57,21 @@ export type PackageDetailItem = {
   image: string;
   includes: string[];
   itinerarySections: PackageDetailSection[];
+  businessId: string | null;
 };
 
 const FALLBACK_PACKAGE_IMAGE = "/packages/sunrise-eco.jpg";
 
-function getMockSource(): MockPackageItem[] {
-  return mockPackages as MockPackageItem[];
-}
-
 export function formatPackageDuration(
-  duration: number | string | undefined,
+  duration: number | string | undefined
 ): string {
-  if (typeof duration === "number") {
-    return `${duration} Hari`;
-  }
-
-  if (typeof duration === "string" && duration.trim()) {
-    return duration;
-  }
-
+  if (typeof duration === "number") return `${duration} Hari`;
+  if (typeof duration === "string" && duration.trim()) return duration;
   return "-";
 }
 
-export function mapMockPackageToListItem(
-  pkg: MockPackageItem,
-): PackageListItem {
-  return {
-    id: pkg.id,
-    title: pkg.title,
-    duration: pkg.duration,
-    price: pkg.price,
-    eco: pkg.eco,
-    image: pkg.image,
-    includes: pkg.includes,
-  };
-}
-
 export function mapApiPackageToListItem(
-  pkg: ApprovedPackageApiItem,
+  pkg: ApprovedPackageApiItem
 ): PackageListItem {
   return {
     id: pkg.id,
@@ -123,54 +84,8 @@ export function mapApiPackageToListItem(
   };
 }
 
-function buildMockItinerarySections(
-  pkg: MockPackageItem,
-): PackageDetailSection[] {
-  const sections: PackageDetailSection[] = [];
-
-  const hasMultipleDays = Boolean(pkg.itinerary2 || pkg.itinerary3);
-
-  if (pkg.itinerary?.length) {
-    sections.push({
-      title: hasMultipleDays ? "Hari 1" : undefined,
-      items: pkg.itinerary,
-    });
-  }
-
-  if (pkg.itinerary2?.length) {
-    sections.push({
-      title: "Hari 2",
-      items: pkg.itinerary2,
-    });
-  }
-
-  if (pkg.itinerary3?.length) {
-    sections.push({
-      title: "Hari 3",
-      items: pkg.itinerary3,
-    });
-  }
-
-  return sections;
-}
-
-export function mapMockPackageToDetailItem(
-  pkg: MockPackageItem,
-): PackageDetailItem {
-  return {
-    id: pkg.id,
-    title: pkg.title,
-    duration: pkg.duration,
-    price: pkg.price,
-    eco: pkg.eco,
-    image: pkg.image,
-    includes: pkg.includes,
-    itinerarySections: buildMockItinerarySections(pkg),
-  };
-}
-
 export function mapApiPackageToDetailItem(
-  pkg: ApprovedPackageApiItem,
+  pkg: ApprovedPackageApiItem
 ): PackageDetailItem {
   return {
     id: pkg.id,
@@ -185,43 +100,27 @@ export function mapApiPackageToDetailItem(
         items: pkg.itinerary ?? [],
       },
     ],
+    businessId: pkg.businessId ?? null,
   };
 }
 
-export function getMockPackageById(id: string): MockPackageItem | null {
-  return getMockSource().find((pkg) => pkg.id === id) ?? null;
-}
-
 export async function getApprovedPackages(): Promise<ApprovedPackageApiItem[]> {
-  const response = await apiFetch<ApprovedPackagesResponse>(
-    "/packages/approved",
-    {
-      cache: "no-store",
-    },
-  );
+  const response = await apiFetch<ApprovedPackagesResponse>("/packages/approved", {
+    cache: "no-store",
+  });
 
-  if (Array.isArray(response)) {
-    return response;
-  }
-
-  if (response && Array.isArray(response.data)) {
-    return response.data;
-  }
-
+  if (Array.isArray(response)) return response;
+  if (response?.data && Array.isArray(response.data)) return response.data;
   return [];
 }
 
 export async function getApprovedPackageById(
-  packageId: string,
+  packageId: string
 ): Promise<ApprovedPackageApiItem | null> {
   try {
-    const response = await apiFetch<ApprovedPackageApiItem>(
-      `/packages/${packageId}`,
-      {
-        cache: "no-store",
-      },
-    );
-
+    const response = await apiFetch<ApprovedPackageApiItem>(`/packages/${packageId}`, {
+      cache: "no-store",
+    });
     return response ?? null;
   } catch {
     return null;
@@ -229,43 +128,19 @@ export async function getApprovedPackageById(
 }
 
 export async function getPackageDetailById(
-  id: string,
+  id: string
 ): Promise<PackageDetailItem | null> {
-  const mockPkg = getMockPackageById(id);
-  if (mockPkg) {
-    return mapMockPackageToDetailItem(mockPkg);
-  }
-
   const apiPkg = await getApprovedPackageById(id);
-  if (apiPkg) {
-    return mapApiPackageToDetailItem(apiPkg);
-  }
+  if (!apiPkg) return null;
 
-  return null;
+  return mapApiPackageToDetailItem(apiPkg);
 }
 
-function dedupePackages(items: PackageListItem[]): PackageListItem[] {
-  const seen = new Set<string>();
-
-  return items.filter((item) => {
-    if (seen.has(item.id)) {
-      return false;
-    }
-
-    seen.add(item.id);
-    return true;
-  });
-}
-
-export async function getMergedPackageList(): Promise<PackageListItem[]> {
-  const mockItems = getMockSource().map(mapMockPackageToListItem);
-
+export async function getApprovedPackageList(): Promise<PackageListItem[]> {
   try {
     const apiPackages = await getApprovedPackages();
-    const apiItems = apiPackages.map(mapApiPackageToListItem);
-
-    return dedupePackages([...mockItems, ...apiItems]);
+    return apiPackages.map(mapApiPackageToListItem);
   } catch {
-    return mockItems;
+    return [];
   }
 }

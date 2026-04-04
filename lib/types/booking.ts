@@ -1,4 +1,47 @@
-export type BookingStatus = "pending" | "confirmed" | "completed" | "cancelled";
+export type BookingStatus =
+  | "pending"
+  | "waiting_for_payment"
+  | "confirmed"
+  | "completed"
+  | "cancelled";
+
+
+  export type UserBookingHistoryApiItem = {
+  id: string;
+  userId: string;
+  businessId: string;
+  packageId: string;
+  quantity: number;
+  amount: number;
+  status: BookingStatus;
+  paymentProofUrl: string | null;
+  paymentUploadedAt: string | null;
+  reviewedAt: string | null;
+  reviewedBy: string | null;
+  reviewNote: string | null;
+  createdAt: string;
+  updatedAt: string | null;
+  business?: {
+    id: string;
+    name: string;
+    address: string;
+    approvalStatus?: string;
+  } | null;
+  user?: {
+    id: string;
+    username: string;
+    email: string;
+    role?: string;
+    status?: string;
+  } | null;
+};
+
+export type UserBookingHistoryApiResponse = {
+  items: UserBookingHistoryApiItem[];
+  page: number;
+  size: number;
+  total: number;
+};
 
 export type TravelerBooking = {
   id: string;

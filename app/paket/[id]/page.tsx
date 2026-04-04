@@ -19,19 +19,14 @@ import {
   Users,
 } from "lucide-react";
 
-import { formatRupiah, packages } from "@/lib/data";
+import { formatRupiah } from "@/lib/data";
 import {
   getApprovedPackageById,
-  getMergedPackageList,
-  getMockPackageById,
+  getApprovedPackageList,
   getPackageDetailById,
   mapApiPackageToDetailItem,
-  mapMockPackageToDetailItem,
 } from "@/lib/services/package-service";
-
-export async function generateStaticParams() {
-  return packages.map((p) => ({ id: p.id }));
-}
+import { useAppSelector } from "@/lib/redux/hooks";
 
 export async function generateMetadata({
   params,
@@ -40,30 +35,19 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { id } = await params;
 
-  const mockPkg = getMockPackageById(id);
-  if (mockPkg) {
-    const mapped = mapMockPackageToDetailItem(mockPkg);
-
-    return {
-      title: `${mapped.title} - Desa Manud Jaya`,
-      description: `Paket wisata ${mapped.title} - ${mapped.duration} dengan harga ${formatRupiah(mapped.price)} per orang.`,
-    };
-  }
-
   const apiPkg = await getApprovedPackageById(id);
-  if (apiPkg) {
-    const mapped = mapApiPackageToDetailItem(apiPkg);
-
-    return {
-      title: `${mapped.title} - Desa Manud Jaya`,
-      description: `Paket wisata ${mapped.title} - ${mapped.duration} dengan harga ${formatRupiah(mapped.price)} per orang.`,
-    };
+  if (!apiPkg) {
+    return { title: "Paket Tidak Ditemukan" };
   }
+
+  const mapped = mapApiPackageToDetailItem(apiPkg);
 
   return {
-    title: "Paket Tidak Ditemukan",
+    title: `${mapped.title} - Desa Manud Jaya`,
+    description: `Paket wisata ${mapped.title} - ${mapped.duration} dengan harga ${formatRupiah(mapped.price)} per orang.`,
   };
 }
+
 
 export default async function PackageDetailPage({
   params,
@@ -77,9 +61,9 @@ export default async function PackageDetailPage({
   if (!pkg) {
     notFound();
   }
-
-  const mergedPackages = await getMergedPackageList();
-  const otherPackages = mergedPackages.filter((p) => p.id !== id).slice(0, 3);
+  const packageList = await getApprovedPackageList();
+  const otherPackages = packageList.filter((p) => p.id !== id).slice(0, 3);
+ 
 
   return (
     <>
@@ -240,9 +224,7 @@ export default async function PackageDetailPage({
                     </div>
 
                     <Button className="w-full" size="lg" asChild>
-                      <Link href={`/pemesanan/${pkg.id}`}>
-                        Pesan Sekarang
-                      </Link>
+                      <Link href={`/pemesanan/${pkg.id}`}>Pesan Sekarang</Link>
                     </Button>
 
                     <p className="text-center text-xs text-muted-foreground">
