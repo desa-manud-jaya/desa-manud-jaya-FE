@@ -103,15 +103,33 @@ export function mapApiPackageToDetailItem(
     businessId: pkg.businessId ?? null,
   };
 }
-
+function filterVisibleApprovedPackages(items: ApprovedPackageApiItem[]) {
+  return items.filter(
+    (item) => item.deletionRequestStatus !== "APPROVED"
+  );
+}
 export async function getApprovedPackages(): Promise<ApprovedPackageApiItem[]> {
-  const response = await apiFetch<ApprovedPackagesResponse>("/packages/approved", {
-    cache: "no-store",
-  });
+  const response = await apiFetch<ApprovedPackagesResponse>(
+    "/packages/approved",
+    {
+      cache: "no-store",
+    },
+  );
 
-  if (Array.isArray(response)) return response;
-  if (response?.data && Array.isArray(response.data)) return response.data;
-  return [];
+  let items: ApprovedPackageApiItem[] = [];
+
+  if (Array.isArray(response)) {
+    items = response;
+  } else if (response && Array.isArray(response.data)) {
+    items = response.data;
+  }
+
+  const filteredItems = filterVisibleApprovedPackages(items);
+
+  console.log("PACKAGES APPROVED RAW RESPONSE:", items);
+  console.log("PACKAGES APPROVED FILTERED RESPONSE:", filteredItems);
+
+  return filteredItems;
 }
 
 export async function getApprovedPackageById(
