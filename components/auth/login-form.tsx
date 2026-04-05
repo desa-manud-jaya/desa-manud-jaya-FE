@@ -110,7 +110,7 @@ export function LoginForm({
           )}
         </div>
 
-        <div className="space-y-2">
+        {/* <div className="space-y-2">
           <label className="text-sm font-medium text-foreground">
             Masuk sebagai
           </label>
@@ -124,7 +124,7 @@ export function LoginForm({
             <option value="partner">Kemitraan</option>
             <option value="admin">Admin</option>
           </select>
-        </div>
+        </div> */}
 
         <Button type="submit" className="h-12 w-full" disabled={isSubmitting}>
           {isSubmitting ? "Masuk..." : "Masuk"}
