@@ -219,7 +219,7 @@ export default async function PackageDetailPage({
                     <div className="flex items-center gap-2 rounded-lg bg-primary/5 p-3">
                       <Users className="h-4 w-4 text-primary" />
                       <span className="text-xs text-muted-foreground">
-                        Minimal 2 orang per booking
+                        Jumlah peserta akan dikonfirmasi saat pemesanan
                       </span>
                     </div>
 
