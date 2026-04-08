@@ -29,10 +29,7 @@ const features = [
 
 export function AboutSection() {
   return (
-    <section
-      id="tentang"
-      className="bg-background py-24"
-    >
+    <section id="tentang" className="bg-background py-24">
       <div className="mx-auto max-w-7xl px-6">
         {/* Section header */}
         <div className="mx-auto max-w-2xl text-center">
@@ -43,9 +40,24 @@ export function AboutSection() {
             Transformasi Digital Wisata Desa Berkelanjutan
           </h2>
           <p className="mt-4 text-pretty leading-relaxed text-muted-foreground">
-            LSM Cipta Bumi Sentosa Abadi berkomitmen memberdayakan masyarakat
-            Desa Manud Jaya melalui teknologi informasi sebagai pendorong
-            pembangunan ekonomi yang berkelanjutan dan ramah lingkungan.
+            Manud Jaya Village adalah platform pariwisata berkelanjutan yang
+            terintegrasi secara digital, dirancang untuk memberdayakan
+            masyarakat lokal sekaligus menjaga warisan alam dan budaya desa.
+            Misi kami adalah mentransformasi pariwisata desa melalui teknologi,
+            transparansi, dan praktik ramah lingkungan.
+          </p>
+          <p className="mt-4 text-pretty leading-relaxed text-muted-foreground">
+            Melalui paket tur berlabel ramah lingkungan yang dikurasi, sistem
+            pemesanan terpusat, serta pemantauan dampak pariwisata secara
+            real-time, kami menghubungkan para wisatawan secara langsung dengan
+            pelaku usaha lokal, homestay, dan pengalaman berbasis komunitas.
+            Setiap perjalanan mendukung mata pencaharian warga, mendorong wisata
+            yang bertanggung jawab, dan berkontribusi pada pertumbuhan ekonomi
+            serta lingkungan yang dapat diukur.
+          </p>
+          <p className="mt-4 text-pretty leading-relaxed text-muted-foreground">
+            Kami percaya pariwisata tidak hanya menciptakan pengalaman yang
+            berkesan—tetapi juga menghadirkan dampak yang bermakna.
           </p>
         </div>
 

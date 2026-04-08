@@ -2,53 +2,223 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Leaf, Menu, X } from "lucide-react";
+import Image from "next/image";
+import {
+  Menu,
+  X,
+  UserCircle2,
+  Settings,
+  UserCog,
+  KeyRound,
+  LogOut,
+  ChevronDown,
+  ReceiptText,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
+import logodesa from "../public/logomanudjaya.svg";
+import type { AuthMode } from "@/components/landing-page";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const navLinks = [
-  { href: "#beranda", label: "Beranda" },
-  { href: "#tentang", label: "Tentang" },
-  { href: "#destinasi", label: "Destinasi" },
-  { href: "#paket", label: "Paket Wisata" },
-  { href: "#kontak", label: "Kontak" },
+  { href: "#beranda", label: "Home" },
+  { href: "#tentang", label: "About Us" },
+  { href: "#destinasi", label: "Destination" },
+  { href: "#paket", label: "Tour Package" },
+  { href: "#kontak", label: "Contact" },
 ];
 
-export function Navbar() {
+export type TravelerSession = {
+  name?: string;
+  username?: string;
+  email?: string;
+  role: "traveler" | "partner" | "admin";
+  roleLabel?: string;
+};
+
+type NavbarProps = {
+  authMode?: AuthMode;
+  onOpenLogin?: () => void;
+  onOpenRegister?: () => void;
+  onCloseAuth?: () => void;
+  currentUser?: TravelerSession | null;
+  onLogoutClick?: () => void;
+  hideAuthSection?: boolean;
+};
+
+export function Navbar({
+  authMode = null,
+  onOpenLogin,
+  onOpenRegister,
+  onCloseAuth,
+  currentUser,
+  onLogoutClick,
+  hideAuthSection = false,
+}: NavbarProps) {
   const [open, setOpen] = useState(false);
 
+  const handleNavClick = () => {
+    setOpen(false);
+    onCloseAuth?.();
+  };
+
+  const handleLoginClick = () => {
+    setOpen(false);
+
+    if (!onOpenLogin) return;
+
+    if (authMode === "login") {
+      onCloseAuth?.();
+    } else {
+      onOpenLogin();
+    }
+  };
+
+  const handleRegisterClick = () => {
+    setOpen(false);
+
+    if (!onOpenRegister) return;
+
+    if (authMode === "register") {
+      onCloseAuth?.();
+    } else {
+      onOpenRegister();
+    }
+  };
+
+  const isLoggedInUser = !!currentUser;
+
+  const displayName =
+    currentUser?.name?.trim() || currentUser?.username?.trim() || "User";
+
+  const displayRoleLabel =
+    currentUser?.roleLabel?.trim() ||
+    (currentUser?.role === "admin"
+      ? "Admin"
+      : currentUser?.role === "partner"
+      ? "Partner"
+      : "Traveler");
+
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
-      <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+    <header className="fixed top-0 left-0 right-0 z-50 border-b border-border bg-background/90 backdrop-blur-md">
+      <nav className="mx-auto flex max-w-7xl items-center justify-between px-3 py-1">
         <Link href="/" className="flex items-center gap-2">
-          <Leaf className="h-7 w-7 text-primary" />
+          <Image
+            src={logodesa}
+            alt="Logo Desa Manud Jaya"
+            width={120}
+            height={120}
+          />
           <span className="text-lg font-bold tracking-tight text-foreground">
             Desa Manud Jaya
           </span>
         </Link>
 
-        {/* Desktop */}
         <ul className="hidden items-center gap-8 md:flex">
           {navLinks.map((link) => (
             <li key={link.href}>
-              <a
-                href={link.href}
-                className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+              <Link
+                href={`/${link.href}`}
+                onClick={handleNavClick}
+                className="text-sm font-medium text-primary transition-colors hover:text-primary/30"
               >
                 {link.label}
-              </a>
+              </Link>
             </li>
           ))}
         </ul>
 
-        <div className="hidden md:block">
-          <Button asChild>
-            <a href="#paket">Pesan Sekarang</a>
-          </Button>
-        </div>
+        {!hideAuthSection && (
+          <>
+            {!isLoggedInUser ? (
+              <div className="hidden items-center gap-4 md:flex">
+                <button
+                  type="button"
+                  onClick={handleLoginClick}
+                  className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+                >
+                  Masuk
+                </button>
 
-        {/* Mobile toggle */}
+                <span className="select-none text-muted-foreground/60">||</span>
+
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="border-primary bg-primary-foreground/10 hover:bg-primary-foreground/20"
+                  onClick={handleRegisterClick}
+                >
+                  <span className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
+                    Daftar
+                  </span>
+                </Button>
+              </div>
+            ) : (
+              <div className="hidden items-center gap-3 md:flex">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="flex items-center gap-3 rounded-full px-2 py-1 transition hover:bg-muted">
+                      <UserCircle2 className="h-12 w-12 text-sky-600" />
+                      <div className="text-left">
+                        <p className="text-sm font-semibold text-primary">
+                          {displayName}
+                        </p>
+                        <p className="text-sm text-primary/80">
+                          {displayRoleLabel}
+                        </p>
+                      </div>
+                      <ChevronDown className="h-4 w-4 text-primary/70" />
+                    </button>
+                  </DropdownMenuTrigger>
+
+                  <DropdownMenuContent
+                    align="end"
+                    className="w-56 rounded-2xl p-2"
+                  >
+                    {currentUser?.role === "traveler" && (
+                      <DropdownMenuItem className="rounded-xl" asChild>
+                        <Link href="/riwayat-pemesanan">
+                          <ReceiptText className="mr-3 h-4 w-4 text-emerald-500" />
+                          Riwayat Booking
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuItem className="rounded-xl">
+                      <UserCog className="mr-3 h-4 w-4 text-sky-500" />
+                      Manage Account
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="rounded-xl">
+                      <KeyRound className="mr-3 h-4 w-4 text-pink-500" />
+                      Change Password
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="rounded-xl text-red-500 focus:text-red-500"
+                      onClick={onLogoutClick}
+                    >
+                      <LogOut className="mr-3 h-4 w-4" />
+                      Log out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                <button
+                  type="button"
+                  className="rounded-full p-2 text-primary transition hover:bg-muted"
+                  aria-label="Settings"
+                >
+                  <Settings className="h-6 w-6" />
+                </button>
+              </div>
+            )}
+          </>
+        )}
+
         <button
-          className="md:hidden text-foreground"
+          className="text-foreground md:hidden"
           onClick={() => setOpen(!open)}
           aria-label={open ? "Tutup menu" : "Buka menu"}
         >
@@ -56,28 +226,81 @@ export function Navbar() {
         </button>
       </nav>
 
-      {/* Mobile menu */}
       {open && (
         <div className="border-t border-border bg-background px-6 pb-6 md:hidden">
           <ul className="flex flex-col gap-4 pt-4">
             {navLinks.map((link) => (
               <li key={link.href}>
-                <a
-                  href={link.href}
-                  className="block text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
-                  onClick={() => setOpen(false)}
+                <Link
+                  href={`/${link.href}`}
+                  className="block text-sm font-medium text-primary transition-colors hover:text-primary/30"
+                  onClick={handleNavClick}
                 >
                   {link.label}
-                </a>
+                </Link>
               </li>
             ))}
-            <li>
-              <Button asChild className="w-full">
-                <a href="#paket" onClick={() => setOpen(false)}>
-                  Pesan Sekarang
-                </a>
-              </Button>
-            </li>
+
+            {!hideAuthSection && (
+              <>
+                {!isLoggedInUser ? (
+                  <li>
+                    <Button className="w-full" onClick={handleLoginClick}>
+                      Masuk
+                    </Button>
+
+                    <div className="my-2 border-t border-border" />
+
+                    <Button
+                      variant="outline"
+                      className="w-full border-primary bg-primary-foreground/10 hover:bg-primary-foreground/20"
+                      onClick={handleRegisterClick}
+                    >
+                      Daftar
+                    </Button>
+                  </li>
+                ) : (
+                  <li className="space-y-2 pt-2">
+                    <div className="rounded-xl border border-border p-3">
+                      <p className="text-sm font-semibold text-primary">
+                        {displayName}
+                      </p>
+                      <p className="text-sm text-primary/80">
+                        {displayRoleLabel}
+                      </p>
+                    </div>
+
+                    {currentUser?.role === "traveler" && (
+                      <Button variant="outline" className="w-full justify-start" asChild>
+                        <Link href="/riwayat-pemesanan">
+                          <ReceiptText className="mr-2 h-4 w-4" />
+                          Riwayat Booking
+                        </Link>
+                      </Button>
+                    )}
+
+                    <Button variant="outline" className="w-full justify-start">
+                      <UserCog className="mr-2 h-4 w-4" />
+                      Manage Account
+                    </Button>
+
+                    <Button variant="outline" className="w-full justify-start">
+                      <KeyRound className="mr-2 h-4 w-4" />
+                      Change Password
+                    </Button>
+
+                    <Button
+                      variant="destructive"
+                      className="w-full justify-start"
+                      onClick={onLogoutClick}
+                    >
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Log out
+                    </Button>
+                  </li>
+                )}
+              </>
+            )}
           </ul>
         </div>
       )}
