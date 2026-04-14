@@ -1,6 +1,7 @@
 export type BookingStatus =
   | "pending"
   | "waiting_for_payment"
+  | "paid_pending_review"
   | "confirmed"
   | "completed"
   | "cancelled";

@@ -14,7 +14,7 @@ import {
   type LoggedInUser,
 } from "@/lib/services/booking-service";
 import { getApprovedPackages } from "@/lib/services/package-service";
-import type { UserBookingHistoryApiItem } from "@/lib/types/booking";
+import type { BookingStatus, UserBookingHistoryApiItem } from "@/lib/types/booking";
 
 function formatBookingDate(value: string) {
   return new Intl.DateTimeFormat("id-ID", {
@@ -23,10 +23,33 @@ function formatBookingDate(value: string) {
   }).format(new Date(value));
 }
 
-function getStatusLabel(status: UserBookingHistoryApiItem["status"]) {
+function formatNullableDate(value?: string | null) {
+  if (!value) return "-";
+
+  return formatBookingDate(value);
+}
+
+function deriveDisplayStatus(booking: UserBookingHistoryApiItem): BookingStatus {
+  const hasPaymentProof = Boolean(
+    booking.paymentProofUrl || booking.paymentUploadedAt,
+  );
+
+  if (
+    hasPaymentProof &&
+    (booking.status === "pending" || booking.status === "waiting_for_payment")
+  ) {
+    return "paid_pending_review";
+  }
+
+  return booking.status;
+}
+
+function getStatusLabel(status: BookingStatus) {
   switch (status) {
     case "waiting_for_payment":
       return "Menunggu Pembayaran";
+    case "paid_pending_review":
+      return "Paid - Pending Pengecekan Admin";
     case "confirmed":
       return "Terkonfirmasi";
     case "completed":
@@ -39,10 +62,12 @@ function getStatusLabel(status: UserBookingHistoryApiItem["status"]) {
   }
 }
 
-function getStatusVariant(status: UserBookingHistoryApiItem["status"]) {
+function getStatusVariant(status: BookingStatus) {
   switch (status) {
     case "waiting_for_payment":
       return "secondary" as const;
+    case "paid_pending_review":
+      return "default" as const;
     case "confirmed":
       return "default" as const;
     case "completed":
@@ -211,6 +236,8 @@ export function BookingHistoryList() {
         const packageTitle =
           packageTitleMap[booking.packageId] ||
           `Paket ${shortenId(booking.packageId)}`;
+        const displayStatus = deriveDisplayStatus(booking);
+        const isPendingAdminReview = displayStatus === "paid_pending_review";
 
         return (
           <Card key={booking.id} className="overflow-hidden">
@@ -228,12 +255,12 @@ export function BookingHistoryList() {
                 </p>
               </div>
 
-              <Badge variant={getStatusVariant(booking.status)}>
-                {getStatusLabel(booking.status)}
+              <Badge variant={getStatusVariant(displayStatus)}>
+                {getStatusLabel(displayStatus)}
               </Badge>
             </CardHeader>
 
-            <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
               <div className="rounded-xl bg-secondary/40 p-4">
                 <p className="mb-2 flex items-center gap-2 text-sm font-medium text-foreground">
                   <Package2 className="h-4 w-4 text-primary" />
@@ -278,8 +305,25 @@ export function BookingHistoryList() {
                   {formatRupiah(booking.amount)}
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Status: {getStatusLabel(booking.status)}
+                  Status: {getStatusLabel(displayStatus)}
                 </p>
+              </div>
+
+              <div className="rounded-xl bg-secondary/40 p-4">
+                <p className="mb-2 text-sm font-medium text-foreground">
+                  Detail pembayaran
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Bukti transfer diunggah: {formatNullableDate(booking.paymentUploadedAt)}
+                </p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Verifikasi admin: {booking.reviewedAt ? "Sudah dicek" : "Menunggu pengecekan"}
+                </p>
+                {booking.reviewNote && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Catatan admin: {booking.reviewNote}
+                  </p>
+                )}
               </div>
             </CardContent>
 
@@ -290,9 +334,13 @@ export function BookingHistoryList() {
                 </Link>
               </Button>
 
-              {booking.status === "waiting_for_payment" ? (
+              {displayStatus === "waiting_for_payment" ? (
                 <Button type="button" variant="outline" onClick={() => {}} disabled>
                   Bayar Sekarang
+                </Button>
+              ) : isPendingAdminReview ? (
+                <Button type="button" variant="outline" disabled>
+                  Menunggu Pengecekan Admin
                 </Button>
               ) : (
                 <Button variant="outline" asChild>

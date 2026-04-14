@@ -85,6 +85,12 @@ When editing package logic:
 - Keep ID-based deduplication behavior intact
 - Keep API-to-UI mapping centralized in `lib/services/package-service.ts`
 
+### Booking / Payment Status Notes
+- Booking history UI now supports a display status: `paid_pending_review`.
+- This status is derived in the frontend when payment proof exists (`paymentProofUrl` or `paymentUploadedAt`) while backend status is still `pending` or `waiting_for_payment`.
+- User-facing label for this state is **"Paid - Pending Pengecekan Admin"**.
+- Booking history card also surfaces payment details: upload timestamp, admin review state, and review note when present.
+
 ## Auth Notes
 Auth is primarily handled on the client side.
 
