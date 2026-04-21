@@ -60,8 +60,19 @@ export function LandingPage() {
     }
   }, []);
 
-  const handleOpenLogin = () => setAuthMode("login");
-  const handleOpenRegister = () => setAuthMode("register");
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleOpenLogin = () => {
+    setAuthMode("login");
+    scrollToTop();
+  };
+
+  const handleOpenRegister = () => {
+    setAuthMode("register");
+    scrollToTop();
+  };
   const handleCloseAuth = () => setAuthMode(null);
 
   const handleLoginSubmit = (user: LoggedInUser) => {
