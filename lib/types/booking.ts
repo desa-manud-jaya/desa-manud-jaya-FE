@@ -2,6 +2,8 @@ export type BookingStatus =
   | "pending"
   | "waiting_for_payment"
   | "paid_pending_review"
+  | "approved"
+  | "rejected"
   | "confirmed"
   | "completed"
   | "cancelled";
@@ -12,6 +14,8 @@ export type BookingStatus =
   userId: string;
   businessId: string;
   packageId: string;
+  guideId?: string | null;
+  tripDate?: string | null;
   quantity: number;
   amount: number;
   status: BookingStatus;
@@ -27,6 +31,21 @@ export type BookingStatus =
     name: string;
     address: string;
     approvalStatus?: string;
+  } | null;
+  guide?: {
+    id?: string;
+    name?: string;
+    fullName?: string;
+    username?: string;
+    phone?: string;
+    user?: {
+      username?: string;
+      email?: string;
+    } | null;
+    guideProfile?: {
+      fullName?: string;
+      phone?: string;
+    } | null;
   } | null;
   user?: {
     id: string;

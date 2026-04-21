@@ -1,12 +1,25 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { Building2, Clock3, Package2, ReceiptText } from "lucide-react";
+import {
+  CheckCircle2,
+  Package2,
+  ReceiptText,
+  XCircle,
+} from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { formatRupiah } from "@/lib/data";
 import {
   getCurrentUser,
@@ -20,6 +33,14 @@ function formatBookingDate(value: string) {
   return new Intl.DateTimeFormat("id-ID", {
     dateStyle: "medium",
     timeStyle: "short",
+  }).format(new Date(value));
+}
+
+function formatTripDate(value?: string | null) {
+  if (!value) return "-";
+
+  return new Intl.DateTimeFormat("id-ID", {
+    dateStyle: "medium",
   }).format(new Date(value));
 }
 
@@ -49,7 +70,11 @@ function getStatusLabel(status: BookingStatus) {
     case "waiting_for_payment":
       return "Menunggu Pembayaran";
     case "paid_pending_review":
-      return "Paid - Pending Pengecekan Admin";
+      return "Dibayar - Menunggu Review";
+    case "approved":
+      return "Pembayaran Tervalidasi";
+    case "rejected":
+      return "Pembayaran Ditolak";
     case "confirmed":
       return "Terkonfirmasi";
     case "completed":
@@ -68,6 +93,10 @@ function getStatusVariant(status: BookingStatus) {
       return "secondary" as const;
     case "paid_pending_review":
       return "default" as const;
+    case "approved":
+      return "default" as const;
+    case "rejected":
+      return "destructive" as const;
     case "confirmed":
       return "default" as const;
     case "completed":
@@ -83,6 +112,89 @@ function getStatusVariant(status: BookingStatus) {
 function shortenId(value: string) {
   return value.length > 8 ? `${value.slice(0, 8)}...` : value;
 }
+
+function getGuideName(booking: UserBookingHistoryApiItem) {
+  return (
+    booking.guide?.fullName ||
+    booking.guide?.name ||
+    booking.guide?.guideProfile?.fullName ||
+    booking.guide?.username ||
+    booking.guide?.user?.username ||
+    null
+  );
+}
+
+function getGuidePhone(booking: UserBookingHistoryApiItem) {
+  return booking.guide?.phone || booking.guide?.guideProfile?.phone || null;
+}
+
+function DetailItem({
+  label,
+  value,
+}: {
+  label: string;
+  value: ReactNode;
+}) {
+  return (
+    <div className="rounded-lg border border-border bg-secondary/30 p-4">
+      <p className="text-xs font-medium uppercase text-muted-foreground">
+        {label}
+      </p>
+      <div className="mt-2 text-sm font-medium text-foreground">{value}</div>
+    </div>
+  );
+}
+
+function getCardClassName(status: BookingStatus) {
+  if (status === "approved") {
+    return "overflow-hidden border-emerald-300 bg-emerald-50/70 shadow-sm shadow-emerald-100";
+  }
+
+  if (status === "rejected") {
+    return "overflow-hidden border-red-300 bg-red-50/70 shadow-sm shadow-red-100";
+  }
+
+  if (status === "waiting_for_payment") {
+    return "overflow-hidden border-amber-200 bg-amber-50/45";
+  }
+
+  return "overflow-hidden";
+}
+
+function getInfoBoxClassName(status: BookingStatus) {
+  if (status === "approved") {
+    return "rounded-xl border border-emerald-200 bg-white/80 p-4";
+  }
+
+  if (status === "rejected") {
+    return "rounded-xl border border-red-200 bg-white/80 p-4";
+  }
+
+  if (status === "waiting_for_payment") {
+    return "rounded-xl border border-amber-100 bg-white/75 p-4";
+  }
+
+  return "rounded-xl bg-secondary/40 p-4";
+}
+
+function getStatusBadgeClassName(status: BookingStatus) {
+  if (status === "approved") {
+    return "border-transparent bg-emerald-600 text-white";
+  }
+
+  if (status === "rejected") {
+    return "border-transparent bg-red-600 text-white";
+  }
+
+  if (status === "paid_pending_review") {
+    return "border-transparent bg-amber-600 text-white";
+  }
+
+  return undefined;
+}
+
+const dialogScrollClassName =
+  "scrollbar-thin scrollbar-track-transparent scrollbar-thumb-muted-foreground/20 hover:scrollbar-thumb-muted-foreground/35 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-muted-foreground/20 hover:[&::-webkit-scrollbar-thumb]:bg-muted-foreground/35";
 
 export function BookingHistoryList() {
   const [currentUser, setCurrentUser] = useState<LoggedInUser | null>(null);
@@ -238,32 +350,73 @@ export function BookingHistoryList() {
           `Paket ${shortenId(booking.packageId)}`;
         const displayStatus = deriveDisplayStatus(booking);
         const isPendingAdminReview = displayStatus === "paid_pending_review";
+        const isApproved = displayStatus === "approved";
+        const isRejected = displayStatus === "rejected";
+        const infoBoxClassName = getInfoBoxClassName(displayStatus);
+        const guideName = getGuideName(booking);
+        const guidePhone = getGuidePhone(booking);
 
         return (
-          <Card key={booking.id} className="overflow-hidden">
+          <Card key={booking.id} className={getCardClassName(displayStatus)}>
             <CardHeader className="gap-4 md:flex-row md:items-start md:justify-between">
               <div>
-                <CardTitle className="text-xl text-foreground">
-                  {packageTitle}
+                <CardTitle className="flex items-center gap-2 text-xl text-foreground">
+                  {isApproved && (
+                    <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+                  )}
+                  {isRejected && (
+                    <XCircle className="h-5 w-5 text-red-600" />
+                  )}
+                  <span>{packageTitle}</span>
                 </CardTitle>
                 <p className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
-                  <ReceiptText className="h-4 w-4 text-primary" />
+                  <ReceiptText
+                    className={`h-4 w-4 ${
+                      isApproved
+                        ? "text-emerald-600"
+                        : isRejected
+                          ? "text-red-600"
+                          : "text-primary"
+                    }`}
+                  />
                   ID booking:{" "}
                   <span className="font-medium text-foreground">
                     {shortenId(booking.id)}
                   </span>
                 </p>
+                {isApproved && (
+                  <p className="mt-2 max-w-2xl text-sm font-medium text-emerald-700">
+                    Pembayaran telah tervalidasi dan diterima oleh admin.
+                  </p>
+                )}
+                {isRejected && (
+                  <p className="mt-2 max-w-2xl text-sm font-medium text-red-700">
+                    Pembayaran ditolak oleh admin. Periksa catatan admin untuk
+                    tindak lanjut.
+                  </p>
+                )}
               </div>
 
-              <Badge variant={getStatusVariant(displayStatus)}>
+              <Badge
+                variant={getStatusVariant(displayStatus)}
+                className={getStatusBadgeClassName(displayStatus)}
+              >
                 {getStatusLabel(displayStatus)}
               </Badge>
             </CardHeader>
 
-            <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-              <div className="rounded-xl bg-secondary/40 p-4">
+            <CardContent className="grid gap-4 md:grid-cols-3">
+              <div className={infoBoxClassName}>
                 <p className="mb-2 flex items-center gap-2 text-sm font-medium text-foreground">
-                  <Package2 className="h-4 w-4 text-primary" />
+                  <Package2
+                    className={`h-4 w-4 ${
+                      isApproved
+                        ? "text-emerald-600"
+                        : isRejected
+                          ? "text-red-600"
+                          : "text-primary"
+                    }`}
+                  />
                   Detail booking
                 </p>
                 <p className="text-sm text-muted-foreground">
@@ -274,34 +427,19 @@ export function BookingHistoryList() {
                 </p>
               </div>
 
-              <div className="rounded-xl bg-secondary/40 p-4">
-                <p className="mb-2 flex items-center gap-2 text-sm font-medium text-foreground">
-                  <Building2 className="h-4 w-4 text-primary" />
-                  Mitra / Bisnis
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {booking.business?.name || "-"}
-                </p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {booking.business?.address || "-"}
-                </p>
-              </div>
-
-              <div className="rounded-xl bg-secondary/40 p-4">
-                <p className="mb-2 flex items-center gap-2 text-sm font-medium text-foreground">
-                  <Clock3 className="h-4 w-4 text-primary" />
-                  Dibuat pada
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {formatBookingDate(booking.createdAt)}
-                </p>
-              </div>
-
-              <div className="rounded-xl bg-secondary/40 p-4">
+              <div className={infoBoxClassName}>
                 <p className="mb-2 text-sm font-medium text-foreground">
-                  Total pembayaran
+                  Jumlah pembayaran
                 </p>
-                <p className="text-lg font-bold text-primary">
+                <p
+                  className={`text-lg font-bold ${
+                    isApproved
+                      ? "text-emerald-700"
+                      : isRejected
+                        ? "text-red-700"
+                        : "text-primary"
+                  }`}
+                >
                   {formatRupiah(booking.amount)}
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
@@ -309,38 +447,205 @@ export function BookingHistoryList() {
                 </p>
               </div>
 
-              <div className="rounded-xl bg-secondary/40 p-4">
+              <div className={infoBoxClassName}>
                 <p className="mb-2 text-sm font-medium text-foreground">
                   Detail pembayaran
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  Bukti transfer diunggah: {formatNullableDate(booking.paymentUploadedAt)}
+                  Bukti transfer diunggah:{" "}
+                  {formatNullableDate(booking.paymentUploadedAt)}
                 </p>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Verifikasi admin: {booking.reviewedAt ? "Sudah dicek" : "Menunggu pengecekan"}
+                  Verifikasi admin:{" "}
+                  {isApproved
+                    ? "Tervalidasi"
+                    : isRejected
+                      ? "Ditolak"
+                    : booking.reviewedAt
+                      ? "Sudah dicek"
+                      : "Menunggu pengecekan"}
                 </p>
                 {booking.reviewNote && (
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Catatan admin: {booking.reviewNote}
+                  <p
+                    className={`mt-1 text-xs ${
+                      isRejected
+                        ? "font-medium text-red-700"
+                        : "text-muted-foreground"
+                    }`}
+                  >
+                    {isRejected ? "Alasan penolakan" : "Catatan admin"}:{" "}
+                    {booking.reviewNote}
                   </p>
                 )}
               </div>
             </CardContent>
 
             <div className="flex flex-wrap gap-3 border-t border-border px-6 py-4">
-              <Button asChild>
-                <Link href={`/paket/${booking.packageId}`}>
-                  Lihat Detail Paket
-                </Link>
-              </Button>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button>Lihat Detail Paket</Button>
+                </DialogTrigger>
+                <DialogContent
+                  className={`max-h-[90vh] overflow-y-auto sm:max-w-3xl ${dialogScrollClassName}`}
+                >
+                  <DialogHeader>
+                    <DialogTitle>{packageTitle}</DialogTitle>
+                    <DialogDescription>
+                      Detail lengkap paket dan pembayaran booking Anda.
+                    </DialogDescription>
+                  </DialogHeader>
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <DetailItem label="ID booking" value={booking.id} />
+                    <DetailItem
+                      label="Status"
+                      value={
+                        <Badge
+                          variant={getStatusVariant(displayStatus)}
+                          className={getStatusBadgeClassName(displayStatus)}
+                        >
+                          {getStatusLabel(displayStatus)}
+                        </Badge>
+                      }
+                    />
+                    <DetailItem
+                      label="Paket"
+                      value={
+                        <div>
+                          <p>{packageTitle}</p>
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            Package ID: {booking.packageId}
+                          </p>
+                        </div>
+                      }
+                    />
+                    <DetailItem
+                      label="Jumlah peserta"
+                      value={`${booking.quantity} orang`}
+                    />
+                    <DetailItem
+                      label="Tanggal perjalanan"
+                      value={formatTripDate(booking.tripDate)}
+                    />
+                    <DetailItem
+                      label="Dibuat pada"
+                      value={formatBookingDate(booking.createdAt)}
+                    />
+                    <DetailItem
+                      label="Guide lokal"
+                      value={
+                        <div>
+                          <p>{guideName || "Belum ditentukan"}</p>
+                          {booking.guideId && (
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              Guide ID: {booking.guideId}
+                            </p>
+                          )}
+                          {guidePhone && (
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              Telepon: {guidePhone}
+                            </p>
+                          )}
+                        </div>
+                      }
+                    />
+                    <DetailItem
+                      label="Mitra / Bisnis"
+                      value={
+                        <div>
+                          <p>{booking.business?.name || "-"}</p>
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            {booking.business?.address || "-"}
+                          </p>
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            Business ID: {booking.businessId}
+                          </p>
+                        </div>
+                      }
+                    />
+                    <DetailItem
+                      label="Total pembayaran"
+                      value={
+                        <span
+                          className={
+                            isApproved
+                              ? "text-emerald-700"
+                              : isRejected
+                                ? "text-red-700"
+                                : "text-primary"
+                          }
+                        >
+                          {formatRupiah(booking.amount)}
+                        </span>
+                      }
+                    />
+                    <DetailItem
+                      label="Bukti transfer"
+                      value={
+                        booking.paymentProofUrl ? (
+                          <a
+                            href={booking.paymentProofUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-primary underline"
+                          >
+                            Lihat bukti pembayaran
+                          </a>
+                        ) : (
+                          "-"
+                        )
+                      }
+                    />
+                    <DetailItem
+                      label="Tanggal upload bukti"
+                      value={formatNullableDate(booking.paymentUploadedAt)}
+                    />
+                    <DetailItem
+                      label="Verifikasi admin"
+                      value={
+                        isApproved
+                          ? "Tervalidasi"
+                          : isRejected
+                            ? "Ditolak"
+                            : booking.reviewedAt
+                              ? "Sudah dicek"
+                              : "Menunggu pengecekan"
+                      }
+                    />
+                    <DetailItem
+                      label={isRejected ? "Alasan penolakan" : "Catatan admin"}
+                      value={booking.reviewNote || "-"}
+                    />
+                  </div>
+
+                  <div className="flex flex-wrap gap-3 border-t border-border pt-4">
+                    <Button variant="outline" asChild>
+                      <Link href={`/paket/${booking.packageId}`}>
+                        Buka Halaman Paket
+                      </Link>
+                    </Button>
+                    <Button variant="outline" asChild>
+                      <Link href={`/pemesanan/${booking.packageId}`}>
+                        Booking Lagi
+                      </Link>
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
 
               {displayStatus === "waiting_for_payment" ? (
-                <Button type="button" variant="outline" onClick={() => {}} disabled>
-                  Bayar Sekarang
+                <Button variant="outline" asChild>
+                  <Link href={`/pembayaran/${booking.id}`}>Bayar Sekarang</Link>
                 </Button>
               ) : isPendingAdminReview ? (
                 <Button type="button" variant="outline" disabled>
                   Menunggu Pengecekan Admin
+                </Button>
+              ) : isRejected ? (
+                <Button variant="destructive" asChild>
+                  <Link href={`/pemesanan/${booking.packageId}`}>
+                    Booking Ulang
+                  </Link>
                 </Button>
               ) : (
                 <Button variant="outline" asChild>

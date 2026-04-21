@@ -15,13 +15,14 @@ export type LoggedInUser = {
   backendRole: string;
   name: string;
   email: string;
-  role: "traveler" | "partner" | "admin";
+  role: "traveler" | "partner" | "guide" | "admin";
   roleLabel: string;
 };
 
 export type CreateBookingApiPayload = {
   businessId: string;
   packageId: string;
+  tripDate: string;
   quantity: number;
 };
 
@@ -29,6 +30,18 @@ export type CreateBookingApiResponse = {
   id?: string;
   bookingCode?: string;
   status?: string;
+  message?: string;
+};
+
+export type UploadPaymentProofPayload = {
+  file: File;
+};
+
+export type UploadPaymentProofResponse = {
+  id?: string;
+  status?: string;
+  paymentProofUrl?: string | null;
+  paymentUploadedAt?: string | null;
   message?: string;
 };
 
@@ -118,6 +131,26 @@ export async function createBookingApi(
     },
     body: JSON.stringify(payload),
   });
+}
+
+export async function uploadPaymentProofApi(
+  bookingId: string,
+  payload: UploadPaymentProofPayload,
+  token: string
+) {
+  const formData = new FormData();
+  formData.append("file", payload.file);
+
+  return apiFetch<UploadPaymentProofResponse>(
+    `/user/bookings/${bookingId}/payment-proof`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    }
+  );
 }
 
 export function getBookingsByUserId(userId: string) {

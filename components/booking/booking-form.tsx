@@ -153,6 +153,7 @@ export function BookingForm({ packageItem }: BookingFormProps) {
       const payload = {
         businessId: packageItem.businessId,
         packageId: packageItem.id,
+        tripDate: sanitizedValues.travelDate,
         quantity: sanitizedValues.participantCount,
       };
 
@@ -160,14 +161,7 @@ export function BookingForm({ packageItem }: BookingFormProps) {
       console.log("BOOKING CURRENT USER:", currentUser);
       console.log("BOOKING TOKEN:", currentUser.token);
 
-      const response = await createBookingApi(
-        {
-          businessId: packageItem.businessId,
-          packageId: packageItem.id,
-          quantity: sanitizedValues.participantCount,
-        },
-        currentUser.token,
-      );
+      const response = await createBookingApi(payload, currentUser.token);
 
       setSuccessState({
         bookingCode: response.bookingCode ?? response.id ?? "",

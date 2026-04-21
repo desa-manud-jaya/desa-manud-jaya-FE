@@ -22,7 +22,7 @@ type LoggedInUser = {
   backendRole: string;
   name: string;
   email: string;
-  role: "traveler" | "partner" | "admin";
+  role: "traveler" | "partner" | "guide" | "admin";
   roleLabel: string;
 };
 

@@ -36,7 +36,7 @@ export type TravelerSession = {
   name?: string;
   username?: string;
   email?: string;
-  role: "traveler" | "partner" | "admin";
+  role: "traveler" | "partner" | "guide" | "admin";
   roleLabel?: string;
 };
 
@@ -101,6 +101,8 @@ export function Navbar({
       ? "Admin"
       : currentUser?.role === "partner"
       ? "Partner"
+      : currentUser?.role === "guide"
+      ? "Guide"
       : "Traveler");
 
   return (

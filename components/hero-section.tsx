@@ -9,6 +9,7 @@ import type { AuthMode } from "@/components/landing-page";
 import { LoginForm } from "@/components/auth/login-form";
 import { RegisterChoiceForm } from "@/components/auth/register-choice-form";
 import {
+  registerGuide,
   registerTraveler,
   registerPartner,
   login,
@@ -28,7 +29,7 @@ type HeroSectionProps = {
     backendRole: string;
     name: string;
     email: string;
-    role: "traveler" | "partner" | "admin";
+    role: "traveler" | "partner" | "guide" | "admin";
     roleLabel: string;
   }) => void;
 };
@@ -54,8 +55,20 @@ type PartnerRegisterValues = {
   confirmPassword: string;
 };
 
+type GuideRegisterValues = {
+  username: string;
+  fullName: string;
+  email: string;
+  phone: string;
+  licenseNumber: string;
+  cv: File | null;
+  password: string;
+  confirmPassword: string;
+};
+
 type TravelerFieldErrors = Partial<Record<keyof TravelerRegisterValues, string>>;
 type PartnerFieldErrors = Partial<Record<keyof PartnerRegisterValues, string>>;
+type GuideFieldErrors = Partial<Record<keyof GuideRegisterValues, string>>;
 
 type FeedbackState = {
   type: "success" | "error";
@@ -73,6 +86,7 @@ export function HeroSection({
 
   const [isSubmittingTraveler, setIsSubmittingTraveler] = useState(false);
   const [isSubmittingPartner, setIsSubmittingPartner] = useState(false);
+  const [isSubmittingGuide, setIsSubmittingGuide] = useState(false);
   const [isSubmittingLogin, setIsSubmittingLogin] = useState(false);
   const [feedback, setFeedback] = useState<FeedbackState>(null);
 
@@ -80,10 +94,14 @@ export function HeroSection({
     useState<TravelerFieldErrors>({});
   const [partnerFieldErrors, setPartnerFieldErrors] =
     useState<PartnerFieldErrors>({});
+  const [guideFieldErrors, setGuideFieldErrors] = useState<GuideFieldErrors>(
+    {},
+  );
 
   const resetRegisterErrors = () => {
     setTravelerFieldErrors({});
     setPartnerFieldErrors({});
+    setGuideFieldErrors({});
   };
 
   const resetFeedbackAndErrors = () => {
@@ -93,24 +111,28 @@ export function HeroSection({
 
   function mapBackendRoleToFrontendRole(
     backendRole: string
-  ): "traveler" | "partner" | "admin" {
+  ): "traveler" | "partner" | "guide" | "admin" {
     switch (backendRole) {
       case "ADMIN":
         return "admin";
       case "VENDOR":
         return "partner";
+      case "GUIDE":
+        return "guide";
       case "USER":
       default:
         return "traveler";
     }
   }
 
-  function getRoleLabel(role: "traveler" | "partner" | "admin") {
+  function getRoleLabel(role: "traveler" | "partner" | "guide" | "admin") {
     switch (role) {
       case "admin":
         return "Admin";
       case "partner":
         return "Partner";
+      case "guide":
+        return "Guide";
       case "traveler":
       default:
         return "Traveler";
@@ -312,10 +334,128 @@ export function HeroSection({
     }
   };
 
+  const handleRegisterGuide = async (values: GuideRegisterValues) => {
+    setFeedback(null);
+    setGuideFieldErrors({});
+
+    if (values.password !== values.confirmPassword) {
+      setGuideFieldErrors({
+        confirmPassword: "Password dan konfirmasi password tidak sama.",
+      });
+      setFeedback({
+        type: "error",
+        message: "Password dan konfirmasi password tidak sama.",
+      });
+      return;
+    }
+
+    try {
+      setIsSubmittingGuide(true);
+
+      const payload = {
+        username: values.username.trim(),
+        email: values.email.trim(),
+        password: values.password,
+        fullName: values.fullName.trim(),
+        phone: values.phone.trim(),
+        licenseNumber: values.licenseNumber.trim(),
+        cv: values.cv,
+      };
+
+      if (!payload.cv) {
+        const message = "CV guide wajib diunggah.";
+        setGuideFieldErrors({ cv: message });
+        setFeedback({ type: "error", message });
+        return;
+      }
+
+      console.log("REGISTER GUIDE PAYLOAD:", {
+        ...payload,
+        cv: payload.cv.name,
+      });
+
+      const response = await registerGuide({
+        ...payload,
+        cv: payload.cv,
+      });
+
+      console.log("REGISTER GUIDE RESPONSE:", response);
+
+      setGuideFieldErrors({});
+      setFeedback({
+        type: "success",
+        message:
+          "Registrasi guide berhasil. Akun Anda menunggu verifikasi admin.",
+      });
+
+      onOpenLogin();
+    } catch (error) {
+      console.error("REGISTER GUIDE ERROR:", error);
+
+      if (error instanceof ApiError) {
+        const lowerMessage = error.message.toLowerCase();
+
+        if (error.status === 409) {
+          if (lowerMessage.includes("username")) {
+            const message =
+              "Username sudah terdaftar. Coba gunakan username lain.";
+            setGuideFieldErrors({ username: message });
+            setFeedback({ type: "error", message });
+            return;
+          }
+
+          if (lowerMessage.includes("email")) {
+            const message = "Email sudah terdaftar. Coba gunakan email lain.";
+            setGuideFieldErrors({ email: message });
+            setFeedback({ type: "error", message });
+            return;
+          }
+
+          if (lowerMessage.includes("phone")) {
+            const message = "Nomor telepon sudah terdaftar.";
+            setGuideFieldErrors({ phone: message });
+            setFeedback({ type: "error", message });
+            return;
+          }
+
+          if (
+            lowerMessage.includes("license") ||
+            lowerMessage.includes("document") ||
+            lowerMessage.includes("file")
+          ) {
+            const message = "Dokumen lisensi tidak valid atau sudah terdaftar.";
+            setGuideFieldErrors({ cv: message });
+            setFeedback({ type: "error", message });
+            return;
+          }
+
+          setFeedback({
+            type: "error",
+            message: "Data guide sudah terdaftar.",
+          });
+          return;
+        }
+
+        setFeedback({
+          type: "error",
+          message: error.message,
+        });
+        return;
+      }
+
+      setFeedback({
+        type: "error",
+        message: "Terjadi kesalahan saat registrasi guide.",
+      });
+    } finally {
+      setIsSubmittingGuide(false);
+    }
+  };
+
   const handleLoginSubmit = async (values: {
     username: string;
     password: string;
-    role: "traveler" | "partner" | "admin";
+    role: "traveler" | "partner" | "guide" | "admin";
   }) => {
     setFeedback(null);
 
@@ -518,12 +658,19 @@ export function HeroSection({
                   resetFeedbackAndErrors();
                   console.log("pilih partner");
                 }}
+                onSelectGuide={() => {
+                  resetFeedbackAndErrors();
+                  console.log("pilih guide");
+                }}
                 onSubmitTraveler={handleRegisterTraveler}
                 onSubmitPartner={handleRegisterPartner}
+                onSubmitGuide={handleRegisterGuide}
                 isSubmittingTraveler={isSubmittingTraveler}
                 isSubmittingPartner={isSubmittingPartner}
+                isSubmittingGuide={isSubmittingGuide}
                 travelerFieldErrors={travelerFieldErrors}
                 partnerFieldErrors={partnerFieldErrors}
+                guideFieldErrors={guideFieldErrors}
               />
             ) : authMode === "login" ? (
               <LoginForm

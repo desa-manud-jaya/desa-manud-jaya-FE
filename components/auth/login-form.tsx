@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 
-type LoginRole = "traveler" | "partner" | "admin";
+type LoginRole = "traveler" | "partner" | "guide" | "admin";
 
 type LoginFormProps = {
   onSwitchToRegister: () => void;

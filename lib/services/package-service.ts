@@ -87,6 +87,8 @@ export function mapApiPackageToListItem(
 export function mapApiPackageToDetailItem(
   pkg: ApprovedPackageApiItem
 ): PackageDetailItem {
+  console.log("[mapApiPackageToDetailItem] input pkg:", pkg);
+
   return {
     id: pkg.id,
     title: pkg.name,
@@ -132,26 +134,64 @@ export async function getApprovedPackages(): Promise<ApprovedPackageApiItem[]> {
   return filteredItems;
 }
 
+export async function getPackageDetailById(
+  id: string
+): Promise<PackageDetailItem | null> {
+  console.log("[getPackageDetailById] requested id:", id);
+
+  const packages = await getApprovedPackages();
+
+  console.log("[getPackageDetailById] approved packages:", packages);
+
+  const matched = packages.find((item) => item.id === id);
+
+  console.log("[getPackageDetailById] matched package:", matched);
+
+  if (!matched) {
+    console.log("[getPackageDetailById] no matched package found");
+    return null;
+  }
+
+  const mapped = mapApiPackageToDetailItem(matched);
+
+  console.log("[getPackageDetailById] mapped detail item:", mapped);
+
+  return mapped;
+}
+
 export async function getApprovedPackageById(
   packageId: string
 ): Promise<ApprovedPackageApiItem | null> {
   try {
-    const response = await apiFetch<ApprovedPackageApiItem>(`/packages/${packageId}`, {
+    console.log("[getApprovedPackageById] packageId:", packageId);
+
+    const response = await apiFetch<unknown>(`/packages/${packageId}`, {
       cache: "no-store",
     });
-    return response ?? null;
-  } catch {
+
+    console.log("[getApprovedPackageById] raw response:", response);
+
+    if (
+      response &&
+      typeof response === "object" &&
+      "data" in response &&
+      (response as { data?: ApprovedPackageApiItem }).data
+    ) {
+      const unwrapped = (response as { data: ApprovedPackageApiItem }).data;
+      console.log("[getApprovedPackageById] unwrapped data:", unwrapped);
+      return unwrapped;
+    }
+
+    console.log(
+      "[getApprovedPackageById] direct response used as package:",
+      response
+    );
+
+    return response as ApprovedPackageApiItem;
+  } catch (error) {
+    console.error("[getApprovedPackageById] error:", error);
     return null;
   }
-}
-
-export async function getPackageDetailById(
-  id: string
-): Promise<PackageDetailItem | null> {
-  const apiPkg = await getApprovedPackageById(id);
-  if (!apiPkg) return null;
-
-  return mapApiPackageToDetailItem(apiPkg);
 }
 
 export async function getApprovedPackageList(): Promise<PackageListItem[]> {

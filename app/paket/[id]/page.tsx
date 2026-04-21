@@ -17,6 +17,8 @@ import {
   CheckCircle2,
   CalendarDays,
   Users,
+  Phone,
+  UserRoundCheck,
 } from "lucide-react";
 
 import { formatRupiah } from "@/lib/data";
@@ -26,7 +28,34 @@ import {
   getPackageDetailById,
   mapApiPackageToDetailItem,
 } from "@/lib/services/package-service";
-import { useAppSelector } from "@/lib/redux/hooks";
+
+type LocalGuide = {
+  name: string;
+  phone: string;
+};
+
+const localGuides: LocalGuide[] = [
+  { name: "Made Suryana", phone: "0812-3456-7810" },
+  { name: "Ni Luh Kartika", phone: "0821-8842-1907" },
+  { name: "Wayan Arta", phone: "0857-6601-2245" },
+  { name: "Komang Raka", phone: "0819-7780-4312" },
+  { name: "Putu Lestari", phone: "0878-1193-5208" },
+  { name: "Kadek Pramana", phone: "0822-4109-6731" },
+  { name: "Ayu Manik", phone: "0852-3788-9406" },
+  { name: "Gede Wirawan", phone: "0813-9066-2574" },
+];
+
+function getAvailableGuidesForPackage(packageId: string) {
+  const seed = packageId
+    .split("")
+    .reduce((total, char) => total + char.charCodeAt(0), 0);
+  const guideCount = 3;
+
+  return Array.from({ length: guideCount }, (_, index) => {
+    const guideIndex = (seed + index * 2) % localGuides.length;
+    return localGuides[guideIndex];
+  });
+}
 
 export async function generateMetadata({
   params,
@@ -35,19 +64,20 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { id } = await params;
 
-  const apiPkg = await getApprovedPackageById(id);
-  if (!apiPkg) {
+  const pkg = await getPackageDetailById(id);
+
+  console.log("[generateMetadata] id:", id);
+  console.log("[generateMetadata] pkg:", pkg);
+
+  if (!pkg) {
     return { title: "Paket Tidak Ditemukan" };
   }
 
-  const mapped = mapApiPackageToDetailItem(apiPkg);
-
   return {
-    title: `${mapped.title} - Desa Manud Jaya`,
-    description: `Paket wisata ${mapped.title} - ${mapped.duration} dengan harga ${formatRupiah(mapped.price)} per orang.`,
+    title: `${pkg.title} - Desa Manud Jaya`,
+    description: `Paket wisata ${pkg.title} - ${pkg.duration} dengan harga ${formatRupiah(pkg.price)} per orang.`,
   };
 }
-
 
 export default async function PackageDetailPage({
   params,
@@ -56,14 +86,27 @@ export default async function PackageDetailPage({
 }) {
   const { id } = await params;
 
+  console.log("[PackageDetailPage] route id:", id);
+
   const pkg = await getPackageDetailById(id);
 
+  console.log("[PackageDetailPage] detail package result:", pkg);
+
   if (!pkg) {
+    console.log("[PackageDetailPage] pkg is null, calling notFound()");
     notFound();
   }
+
   const packageList = await getApprovedPackageList();
+
+  console.log("[PackageDetailPage] approved package list:", packageList);
+  console.log("[PackageDetailPage] approved package list length:", packageList.length);
+
   const otherPackages = packageList.filter((p) => p.id !== id).slice(0, 3);
- 
+  const availableGuides = getAvailableGuidesForPackage(pkg.id);
+
+  console.log("[PackageDetailPage] otherPackages:", otherPackages);
+  console.log("[PackageDetailPage] otherPackages length:", otherPackages.length);
 
   return (
     <>
@@ -181,6 +224,43 @@ export default async function PackageDetailPage({
                     <span className="text-sm font-medium text-foreground">
                       {item}
                     </span>
+                  </div>
+                ))}
+              </div>
+
+              <Separator className="my-10" />
+
+              <h2 className="flex items-center gap-2 text-2xl font-bold text-foreground">
+                <UserRoundCheck className="h-6 w-6 text-primary" />
+                Pemandu Lokal yang Tersedia
+              </h2>
+
+              <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+                Berikut kandidat guide lokal yang tersedia untuk paket ini.
+                Admin akan memilihkan pemandu yang bertugas setelah booking
+                dibuat.
+              </p>
+
+              <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                {availableGuides.map((guide) => (
+                  <div
+                    key={`${pkg.id}-${guide.phone}`}
+                    className="rounded-lg border border-border bg-card p-4"
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                        <UserRoundCheck className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-foreground">
+                          {guide.name}
+                        </p>
+                        <p className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
+                          <Phone className="h-4 w-4 text-primary" />
+                          {guide.phone}
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>

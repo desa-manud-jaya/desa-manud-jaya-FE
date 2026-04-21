@@ -34,6 +34,16 @@ export type RegisterPartnerPayload = {
   address: string;
 };
 
+export type RegisterGuidePayload = {
+  username: string;
+  email: string;
+  password: string;
+  fullName: string;
+  phone: string;
+  licenseNumber: string;
+  cv: File;
+};
+
 export type AuthApiResponse<T = unknown> = {
   success?: boolean;
   message?: string;
@@ -51,6 +61,29 @@ export async function registerPartner(payload: RegisterPartnerPayload) {
   return apiFetch<AuthApiResponse>("/auth/register/vendor", {
     method: "POST",
     body: JSON.stringify(payload),
+  });
+}
+
+export async function registerGuide(payload: RegisterGuidePayload) {
+  const formData = new FormData();
+  const data = {
+    username: payload.username,
+    email: payload.email,
+    password: payload.password,
+    fullName: payload.fullName,
+    phone: payload.phone,
+    licenseNumber: payload.licenseNumber,
+  };
+
+  formData.append(
+    "data",
+    new Blob([JSON.stringify(data)], { type: "application/json" }),
+  );
+  formData.append("cv", payload.cv);
+
+  return apiFetch<AuthApiResponse>("/auth/register/guide", {
+    method: "POST",
+    body: formData,
   });
 }
 

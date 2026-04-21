@@ -27,7 +27,7 @@ type RegisterTravelerFormProps = {
 };
 
 const inputClassName =
-  "h-14 w-full rounded-2xl border bg-white px-5 pr-14 text-base text-foreground placeholder:text-muted-foreground/80 outline-none transition focus:ring-2 focus:ring-primary/20";
+  "h-12 w-full rounded-lg border bg-white px-4 text-sm text-foreground placeholder:text-muted-foreground/80 outline-none transition focus:ring-2 focus:ring-primary/25";
 
 export function RegisterTravelerForm({
   onBack,
@@ -104,18 +104,20 @@ export function RegisterTravelerForm({
 
   return (
     <div className="w-full">
-      <h2 className="text-4xl font-semibold leading-tight text-foreground md:text-5xl">
-        Daftar sebagai
-        <br />
-        Wisatawan
-      </h2>
+      <div className="mb-8">
+        <p className="text-sm font-medium uppercase tracking-[0.18em] text-primary">
+          Wisatawan
+        </p>
+        <h2 className="mt-3 text-3xl font-semibold leading-tight text-foreground md:text-4xl">
+          Buat akun perjalanan
+        </h2>
+        <p className="mt-3 text-sm leading-6 text-muted-foreground">
+          Temukan paket wisata, simpan booking, dan ikuti perjalanan Anda di
+          Desa Manud Jaya.
+        </p>
+      </div>
 
-      <p className="mt-4 max-w-lg text-lg leading-8 text-muted-foreground">
-        Bergabunglah dengan kami untuk menemukan pengalaman wisata yang tak
-        terlupakan di Desa Manud Jaya.
-      </p>
-
-      <form onSubmit={handleSubmit} noValidate className="mt-10 space-y-5">
+      <form onSubmit={handleSubmit} noValidate className="space-y-4">
         <div>
           <input
             name="username"
@@ -142,110 +144,116 @@ export function RegisterTravelerForm({
           )}
         </div>
 
-        <div>
-          <input
-            name="email"
-            type="email"
-            placeholder="Email"
-            className={getInputClassName("email")}
-            onChange={() => clearFieldError("email")}
-          />
-          {mergedErrors.email && (
-            <p className="mt-2 text-sm text-red-500">{mergedErrors.email}</p>
-          )}
-        </div>
-
-        <div>
-          <input
-            name="phone"
-            type="tel"
-            placeholder="Nomor Telepon"
-            className={getInputClassName("phone")}
-            onChange={() => clearFieldError("phone")}
-          />
-          {mergedErrors.phone && (
-            <p className="mt-2 text-sm text-red-500">{mergedErrors.phone}</p>
-          )}
-        </div>
-
-        <div>
-          <div className="relative">
+        <div className="grid gap-4 md:grid-cols-2">
+          <div>
             <input
-              name="password"
-              type={showPassword ? "text" : "password"}
-              placeholder="Password"
-              className={getInputClassName("password")}
-              onChange={() => clearFieldError("password")}
+              name="email"
+              type="email"
+              placeholder="Email"
+              className={getInputClassName("email")}
+              onChange={() => clearFieldError("email")}
             />
-            <button
-              type="button"
-              onClick={() => setShowPassword((prev) => !prev)}
-              className="absolute inset-y-0 right-0 flex w-14 items-center justify-center text-muted-foreground transition hover:text-foreground"
-              aria-label={
-                showPassword ? "Sembunyikan password" : "Tampilkan password"
-              }
-            >
-              {showPassword ? (
-                <EyeOff className="h-5 w-5" />
-              ) : (
-                <Eye className="h-5 w-5" />
-              )}
-            </button>
+            {mergedErrors.email && (
+              <p className="mt-2 text-sm text-red-500">{mergedErrors.email}</p>
+            )}
           </div>
-          {mergedErrors.password && (
-            <p className="mt-2 text-sm text-red-500">{mergedErrors.password}</p>
-          )}
-        </div>
 
-        <div>
-          <div className="relative">
+          <div>
             <input
-              name="confirmPassword"
-              type={showConfirmPassword ? "text" : "password"}
-              placeholder="Konfirmasi Password"
-              className={getInputClassName("confirmPassword")}
-              onChange={() => clearFieldError("confirmPassword")}
+              name="phone"
+              type="tel"
+              placeholder="Nomor Telepon"
+              className={getInputClassName("phone")}
+              onChange={() => clearFieldError("phone")}
             />
-            <button
-              type="button"
-              onClick={() => setShowConfirmPassword((prev) => !prev)}
-              className="absolute inset-y-0 right-0 flex w-14 items-center justify-center text-muted-foreground transition hover:text-foreground"
-              aria-label={
-                showConfirmPassword
-                  ? "Sembunyikan konfirmasi password"
-                  : "Tampilkan konfirmasi password"
-              }
-            >
-              {showConfirmPassword ? (
-                <EyeOff className="h-5 w-5" />
-              ) : (
-                <Eye className="h-5 w-5" />
-              )}
-            </button>
+            {mergedErrors.phone && (
+              <p className="mt-2 text-sm text-red-500">{mergedErrors.phone}</p>
+            )}
           </div>
-          {mergedErrors.confirmPassword && (
-            <p className="mt-2 text-sm text-red-500">
-              {mergedErrors.confirmPassword}
-            </p>
-          )}
         </div>
 
-        <div className="space-y-3 pt-2">
+        <div className="grid gap-4 md:grid-cols-2">
+          <div>
+            <div className="relative">
+              <input
+                name="password"
+                type={showPassword ? "text" : "password"}
+                placeholder="Password"
+                className={`${getInputClassName("password")} pr-12`}
+                onChange={() => clearFieldError("password")}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                className="absolute inset-y-0 right-0 flex w-12 items-center justify-center text-muted-foreground transition hover:text-foreground"
+                aria-label={
+                  showPassword ? "Sembunyikan password" : "Tampilkan password"
+                }
+              >
+                {showPassword ? (
+                  <EyeOff className="h-5 w-5" />
+                ) : (
+                  <Eye className="h-5 w-5" />
+                )}
+              </button>
+            </div>
+            {mergedErrors.password && (
+              <p className="mt-2 text-sm text-red-500">
+                {mergedErrors.password}
+              </p>
+            )}
+          </div>
+
+          <div>
+            <div className="relative">
+              <input
+                name="confirmPassword"
+                type={showConfirmPassword ? "text" : "password"}
+                placeholder="Konfirmasi Password"
+                className={`${getInputClassName("confirmPassword")} pr-12`}
+                onChange={() => clearFieldError("confirmPassword")}
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword((prev) => !prev)}
+                className="absolute inset-y-0 right-0 flex w-12 items-center justify-center text-muted-foreground transition hover:text-foreground"
+                aria-label={
+                  showConfirmPassword
+                    ? "Sembunyikan konfirmasi password"
+                    : "Tampilkan konfirmasi password"
+                }
+              >
+                {showConfirmPassword ? (
+                  <EyeOff className="h-5 w-5" />
+                ) : (
+                  <Eye className="h-5 w-5" />
+                )}
+              </button>
+            </div>
+            {mergedErrors.confirmPassword && (
+              <p className="mt-2 text-sm text-red-500">
+                {mergedErrors.confirmPassword}
+              </p>
+            )}
+          </div>
+        </div>
+
+        <div className="grid gap-3 pt-2 md:grid-cols-[1fr_auto]">
           <Button
             type="submit"
-            className="h-14 w-full rounded-2xl text-base"
+            className="h-12 rounded-lg"
             disabled={isSubmitting}
           >
-            {isSubmitting ? "Mendaftarkan..." : "Daftar"}
+            {isSubmitting ? "Mendaftarkan..." : "Daftar Wisatawan"}
           </Button>
 
           <button
             type="button"
             onClick={onBack}
             disabled={isSubmitting}
-            className="w-full rounded-2xl border border-stone-300 bg-white px-5 py-4 text-base font-medium text-foreground transition hover:bg-stone-50 disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded-lg border border-border bg-white px-5 py-3 text-sm font-medium text-foreground transition hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-60"
           >
-            Kembali
+            Pilih role lain
           </button>
         </div>
       </form>
