@@ -20,6 +20,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Skeleton } from "@/components/ui/skeleton";
 import { formatRupiah } from "@/lib/data";
 import {
   getCurrentUser,
@@ -196,6 +197,46 @@ function getStatusBadgeClassName(status: BookingStatus) {
 const dialogScrollClassName =
   "scrollbar-thin scrollbar-track-transparent scrollbar-thumb-muted-foreground/20 hover:scrollbar-thumb-muted-foreground/35 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-muted-foreground/20 hover:[&::-webkit-scrollbar-thumb]:bg-muted-foreground/35";
 
+function BookingHistorySkeleton() {
+  return (
+    <div className="space-y-6">
+      {Array.from({ length: 2 }).map((_, index) => (
+        <Card key={index} className="overflow-hidden">
+          <CardHeader className="gap-4 md:flex-row md:items-start md:justify-between">
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <Skeleton className="h-5 w-5 rounded-full" />
+                <Skeleton className="h-7 w-64 max-w-full" />
+              </div>
+              <Skeleton className="h-4 w-48" />
+              <Skeleton className="h-4 w-72 max-w-full" />
+            </div>
+            <Skeleton className="h-7 w-40 rounded-md" />
+          </CardHeader>
+
+          <CardContent className="grid gap-4 md:grid-cols-3">
+            {Array.from({ length: 3 }).map((__, itemIndex) => (
+              <div
+                key={itemIndex}
+                className="rounded-xl border border-border bg-secondary/30 p-4"
+              >
+                <Skeleton className="mb-4 h-4 w-32" />
+                <Skeleton className="h-5 w-40 max-w-full" />
+                <Skeleton className="mt-3 h-4 w-28" />
+              </div>
+            ))}
+          </CardContent>
+
+          <div className="flex flex-wrap gap-3 border-t border-border px-6 py-4">
+            <Skeleton className="h-10 w-40 rounded-lg" />
+            <Skeleton className="h-10 w-32 rounded-lg" />
+          </div>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
 export function BookingHistoryList() {
   const [currentUser, setCurrentUser] = useState<LoggedInUser | null>(null);
   const [bookings, setBookings] = useState<UserBookingHistoryApiItem[]>([]);
@@ -254,13 +295,7 @@ export function BookingHistoryList() {
   }, []);
 
   if (loading) {
-    return (
-      <Card>
-        <CardContent className="py-8 text-sm text-muted-foreground">
-          Memuat riwayat booking...
-        </CardContent>
-      </Card>
-    );
+    return <BookingHistorySkeleton />;
   }
 
   if (!currentUser) {
