@@ -116,6 +116,7 @@ function shortenId(value: string) {
 
 function getGuideName(booking: UserBookingHistoryApiItem) {
   return (
+    booking.guideName ||
     booking.guide?.fullName ||
     booking.guide?.name ||
     booking.guide?.guideProfile?.fullName ||

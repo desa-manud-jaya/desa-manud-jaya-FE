@@ -15,6 +15,7 @@ export type BookingStatus =
   businessId: string;
   packageId: string;
   guideId?: string | null;
+  guideName?: string | null;
   tripDate?: string | null;
   quantity: number;
   amount: number;
